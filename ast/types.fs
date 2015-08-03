@@ -42,10 +42,10 @@ type MemoryTypes =
 
 
 type LocalVariable<'T>(symbol: Symbol) =
-  interface Expression<'T>;
+  class end
 
 type GlobalVariable<'T>(symbol: Symbol) =
-  interface Expression<'T>;
+  class end
 
 
 type Statement =
@@ -86,10 +86,7 @@ module Abstract =
     }
     interface Expression
 
-  type imm<'V> =
-    {
-      Value: 'V;
-    }
+  type imm<'V>(Value: 'V) =
     interface Expression<'V>    
 
 
@@ -154,10 +151,7 @@ type float32'imm =
 type float64'imm =
   Abstract.imm<Float64>
 
-type get_local<'T> =
-  {
-    Variable: LocalVariable<'T>
-  }
+type get_local<'T>(Variable: LocalVariable<'T>) =
   interface Expression<'T>
 
 type set_local<'T> =
@@ -166,10 +160,7 @@ type set_local<'T> =
     Value: Expression<'T>;
   }
 
-type get_global<'T> =
-  {
-    Variable: GlobalVariable<'T>
-  }
+type get_global<'T>(Variable: GlobalVariable<'T>) =
   interface Expression<'T>
 
 type store_global<'T> =
@@ -182,6 +173,6 @@ type store_global<'T> =
 let test () =
   let loc = LocalVariable<Int32>(NamedSymbol("loc"))
   ({ 
-    Address = loc;
-    Value = ({ Value = 3.5f; } : float32'imm);
+    Address = get_local<_>(loc);
+    Value = float32'imm(3.5f);
   } : float32'store'float32)
