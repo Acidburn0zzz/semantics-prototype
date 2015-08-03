@@ -1,8 +1,8 @@
-namespace WebAssembly.AST
+module WebAssembly.AST
 
 type Symbol =
-  | Name of string
-  | Index of int
+  | NamedSymbol of string
+  | AnonymousSymbol of int
 
 
 type Expression = interface end
@@ -39,6 +39,13 @@ type MemoryTypes =
   | Int8
   | Int16
   | LocalTypes
+
+
+type LocalVariable<'T>(symbol: Symbol) =
+  interface Expression<'T>;
+
+type GlobalVariable<'T>(symbol: Symbol) =
+  interface Expression<'T>;
 
 
 type Statement =
@@ -110,7 +117,7 @@ type int64'load_zx'int16 =
 type int64'load_zx'int32 =
   Abstract.load<Int64, Int16>  
 type int64'load'int64 =
-  Abstract.load<Int64, Int64>  
+  Abstract.load<Int64, Int64>
 
 type float32'load'float32 =
   Abstract.load<Float32, Float32>  
@@ -147,9 +154,34 @@ type float32'imm =
 type float64'imm =
   Abstract.imm<Float64>
 
-module Test =
-  let test () =
-    { 
-      Address = ({ Value = 8; } : int32'imm);
-      Value = ({ Value = 3.5f; } : float32'imm);
-    } : float32'store'float32 
+type get_local<'T> =
+  {
+    Variable: LocalVariable<'T>
+  }
+  interface Expression<'T>
+
+type set_local<'T> =
+  {
+    Variable: LocalVariable<'T>;
+    Value: Expression<'T>;
+  }
+
+type get_global<'T> =
+  {
+    Variable: GlobalVariable<'T>
+  }
+  interface Expression<'T>
+
+type store_global<'T> =
+  {
+    Variable: GlobalVariable<'T>;
+    Value: Expression<'T>;
+  }
+
+
+let test () =
+  let loc = LocalVariable<Int32>(NamedSymbol("loc"))
+  ({ 
+    Address = loc;
+    Value = ({ Value = 3.5f; } : float32'imm);
+  } : float32'store'float32)
