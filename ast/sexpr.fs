@@ -12,43 +12,16 @@ type Value =
   | Int32      of int32
   | Int64      of int64
   | Float      of float
-  with
-    override this.ToString() =
-      match this with
-      | Expression e      -> e.ToString()
-      | Symbol s          -> s.ToString()
-      | Int32  i32        -> i32.ToString()
-      | Int64  i64        -> i64.ToString()
-      | Float  f          -> String.Format("{0}f", f)
-  end
 
 and Symbol =
   | NamedSymbol     of string
   | AnonymousSymbol of int
-  with
-    override this.ToString() =
-      match this with
-      | NamedSymbol s     -> String.Format("@{0}", s)
-      | AnonymousSymbol i -> String.Format("@{0}", i)
-  end
 
 and Expression =
   {
     keyword: string;
     arguments: Value list
   }
-  with
-    override this.ToString() =
-      (this.arguments |>
-        Seq.fold
-          (fun (sb:System.Text.StringBuilder) (v:Value) -> 
-            sb.AppendFormat(" {0}", v.ToString()))
-          (StringBuilder()
-            .AppendFormat("({0}", this.keyword.ToString()))
-      )
-        .Append(")")
-        .ToString();
-  end
 
 
 module Parse =
@@ -109,6 +82,37 @@ module Parse =
   do _read_sexpr := (
       LPAREN >>. read_sexpr_body .>> spaces .>> RPAREN
     )
+
+
+let rec toString v : String =
+  match v with
+  | Value.Expression e ->
+    (e.arguments |>
+      Seq.fold
+        (fun (sb:System.Text.StringBuilder) (elt:Value) -> 
+          sb.AppendFormat(" {0}", toString elt))
+        (StringBuilder()
+          .AppendFormat("({0}", e.keyword))
+    )
+      .Append(")")
+      .ToString()
+  |
+
+
+let rec toString (s:Symbol) : String =
+  match s with
+  | NamedSymbol n     -> String.Format("@{0}", n)
+  | AnonymousSymbol i -> String.Format("@{0}", i)
+
+let rec toString (v:Value) : String =
+  match v with
+  | Expression e      -> (toString e)
+  | Symbol s          -> (toString s)
+  | Int32  i32        -> i32.ToString()
+  | Int64  i64        -> i64.ToString()
+  | Float  f          -> String.Format("{0}f", f)
+
+let rec toString (sexpr:Expression) : String =
 
 
 let fromString str =

@@ -6,7 +6,9 @@ open FParsec
 let parseSExpr str = 
   printfn "// '%s'\n" str
   match WebAssembly.SExpr.fromString str with
-  | Success(expr, _, _)         -> printfn "%s\n" (expr.ToString())
+  | Success(expr, _, _)         -> 
+    printfn "%s\n" (expr.ToString())
+    printfn "%A\n" expr
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
 
 parseSExpr "(setlocal @localVar (add 5.0 3))"
