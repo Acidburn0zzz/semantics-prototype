@@ -69,6 +69,98 @@ type Expression =
   | Comma                 of Expression * Expression
   | Conditional           of Expression * Expression * Expression
 
+  | Int32'add             of Expression * Expression
+  | Int32'sub             of Expression * Expression
+  | Int32'mul             of Expression * Expression
+  | Int32'sdiv            of Expression * Expression
+  | Int32'udiv            of Expression * Expression
+  | Int32'srem            of Expression * Expression
+  | Int32'urem            of Expression * Expression
+  | Int32'and             of Expression * Expression
+  | Int32'ior             of Expression * Expression
+  | Int32'xor             of Expression * Expression
+  | Int32'shl             of Expression * Expression
+  | Int32'shr             of Expression * Expression
+  | Int32'sar             of Expression * Expression
+  | Int32'eq              of Expression * Expression
+  | Int32'slt             of Expression * Expression
+  | Int32'sle             of Expression * Expression
+  | Int32'ult             of Expression * Expression
+  | Int32'ule             of Expression * Expression
+  | Int32'sgt             of Expression * Expression
+  | Int32'sge             of Expression * Expression
+  | Int32'ugt             of Expression * Expression
+  | Int32'uge             of Expression * Expression
+  | Int32'clz             of Expression
+  | Int32'ctz             of Expression
+  | Int32'popcnt          of Expression
+
+  | Int64'add             of Expression * Expression
+  | Int64'sub             of Expression * Expression
+  | Int64'mul             of Expression * Expression
+  | Int64'sdiv            of Expression * Expression
+  | Int64'udiv            of Expression * Expression
+  | Int64'srem            of Expression * Expression
+  | Int64'urem            of Expression * Expression
+  | Int64'and             of Expression * Expression
+  | Int64'ior             of Expression * Expression
+  | Int64'xor             of Expression * Expression
+  | Int64'shl             of Expression * Expression
+  | Int64'shr             of Expression * Expression
+  | Int64'sar             of Expression * Expression
+  | Int64'eq              of Expression * Expression
+  | Int64'slt             of Expression * Expression
+  | Int64'sle             of Expression * Expression
+  | Int64'ult             of Expression * Expression
+  | Int64'ule             of Expression * Expression
+  | Int64'sgt             of Expression * Expression
+  | Int64'sge             of Expression * Expression
+  | Int64'ugt             of Expression * Expression
+  | Int64'uge             of Expression * Expression
+  | Int64'clz             of Expression
+  | Int64'ctz             of Expression
+  | Int64'popcnt          of Expression
+
+  | Float32'add           of Expression * Expression
+  | Float32'sub           of Expression * Expression
+  | Float32'mul           of Expression * Expression
+  | Float32'div           of Expression * Expression
+  | Float32'abs           of Expression
+  | Float32'neg           of Expression
+  | Float32'copysign      of Expression * Expression
+  | Float32'ceil          of Expression
+  | Float32'floor         of Expression
+  | Float32'trunc         of Expression
+  | Float32'nearestint    of Expression
+  | Float32'eq            of Expression * Expression
+  | Float32'lt            of Expression * Expression
+  | Float32'le            of Expression * Expression
+  | Float32'gt            of Expression * Expression
+  | Float32'ge            of Expression * Expression
+  | Float32'sqrt          of Expression
+  | Float32'min           of Expression * Expression
+  | Float32'max           of Expression * Expression
+
+  | Float64'add           of Expression * Expression
+  | Float64'sub           of Expression * Expression
+  | Float64'mul           of Expression * Expression
+  | Float64'div           of Expression * Expression
+  | Float64'abs           of Expression
+  | Float64'neg           of Expression
+  | Float64'copysign      of Expression * Expression
+  | Float64'ceil          of Expression
+  | Float64'floor         of Expression
+  | Float64'trunc         of Expression
+  | Float64'nearestint    of Expression
+  | Float64'eq            of Expression * Expression
+  | Float64'lt            of Expression * Expression
+  | Float64'le            of Expression * Expression
+  | Float64'gt            of Expression * Expression
+  | Float64'ge            of Expression * Expression
+  | Float64'sqrt          of Expression
+  | Float64'min           of Expression * Expression
+  | Float64'max           of Expression * Expression
+
 and FunctionSignature =
   {
     ReturnType: ExpressionTypes;
