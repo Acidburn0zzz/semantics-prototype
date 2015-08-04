@@ -22,3 +22,13 @@ mkdir -p ./packages/
 # we have to explicitly specify the packages directory, since nuget
 #  usually installs into . unless it's doing a restore for a .sln file
 mono $NUGET restore -PackagesDirectory ./packages/
+
+# symlinks for convenient importing
+mkdir -p ./libs/
+
+FPARSEC=( "./packages/FParsec.*/lib/*/" )
+FPARSEC=${FPARSEC[0]}
+FPARSEC=`realpath $FPARSEC`
+
+ln -f -s $FPARSEC/FParsec.dll libs/FParsec.dll
+ln -f -s $FPARSEC/FParsecCS.dll libs/FParsecCS.dll
