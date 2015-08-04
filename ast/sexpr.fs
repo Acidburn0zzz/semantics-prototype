@@ -1,6 +1,7 @@
 module WebAssembly.SExpr
 
 open FParsec
+open System
 open System.Text
 
 // What I really want here is something along the lines of
@@ -18,7 +19,7 @@ type Value =
       | Symbol s          -> s.ToString()
       | Int32  i32        -> i32.ToString()
       | Int64  i64        -> i64.ToString()
-      | Float  f          -> f.ToString()
+      | Float  f          -> String.Format("{0}f", f)
   end
 
 and Symbol =
@@ -27,8 +28,8 @@ and Symbol =
   with
     override this.ToString() =
       match this with
-      | NamedSymbol s     -> sprintf "@%s" s
-      | AnonymousSymbol i -> sprintf "@%i" i
+      | NamedSymbol s     -> String.Format("@{0}", s)
+      | AnonymousSymbol i -> String.Format("@{0}", i)
   end
 
 and Expression =
@@ -38,14 +39,14 @@ and Expression =
   }
   with
     override this.ToString() =
-      let result = 
-        StringBuilder()
-          .AppendFormat("({0}", this.keyword.ToString());
-
-      ignore (this.arguments |>
-        Seq.fold (fun (sb:System.Text.StringBuilder) (v:Value) -> sb.AppendFormat(" {0}", v.ToString())) result);
-
-      result.Append(")")
+      (this.arguments |>
+        Seq.fold
+          (fun (sb:System.Text.StringBuilder) (v:Value) -> 
+            sb.AppendFormat(" {0}", v.ToString()))
+          (StringBuilder()
+            .AppendFormat("({0}", this.keyword.ToString()))
+      )
+        .Append(")")
         .ToString();
   end
 
