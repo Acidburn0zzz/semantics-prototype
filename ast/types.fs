@@ -50,10 +50,18 @@ type Expression =
   | Comma                 of Expression * Expression
   | Conditional           of Expression * Expression * Expression
 
+  // Int or float operations
   | Add                   of Expression * Expression
-  | Sub                   of Expression * Expression
   | Mul                   of Expression * Expression
-  | Sdiv                  of Expression * Expression
+  | Sub                   of Expression * Expression
+  | Eq                    of Expression * Expression
+  | Slt                   of Expression * Expression
+  | Sle                   of Expression * Expression
+  | Sgt                   of Expression * Expression
+  | Sge                   of Expression * Expression
+  | Div                   of Expression * Expression
+
+  // Int-only operations
   | Udiv                  of Expression * Expression
   | Srem                  of Expression * Expression
   | Urem                  of Expression * Expression
@@ -63,30 +71,25 @@ type Expression =
   | Shl                   of Expression * Expression
   | Shr                   of Expression * Expression
   | Sar                   of Expression * Expression
-  | Eq                    of Expression * Expression
-  | Slt                   of Expression * Expression
-  | Sle                   of Expression * Expression
   | Ult                   of Expression * Expression
   | Ule                   of Expression * Expression
-  | Sgt                   of Expression * Expression
-  | Sge                   of Expression * Expression
   | Ugt                   of Expression * Expression
   | Uge                   of Expression * Expression
   | Clz                   of Expression
   | Ctz                   of Expression
   | Popcnt                of Expression
 
-  | Fdiv                  of Expression * Expression
-  | Fabs                  of Expression
-  | Fneg                  of Expression
+  // Float-only operations
+  | Abs                   of Expression
+  | Neg                   of Expression
   | Copysign              of Expression * Expression
   | Ceil                  of Expression
   | Floor                 of Expression
   | Trunc                 of Expression
   | Nearestint            of Expression
   | Sqrt                  of Expression
-  | Fmin                  of Expression * Expression
-  | Fmax                  of Expression * Expression
+  | Min                   of Expression * Expression
+  | Max                   of Expression * Expression
 
   | Cvt_signed            of Expression
   | Cvt_unsigned          of Expression
