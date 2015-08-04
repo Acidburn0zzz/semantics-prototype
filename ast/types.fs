@@ -11,38 +11,14 @@ type LocalTypes =
   | Float32
   | Float64
 
-type ExpressionTypes =
+and ExpressionTypes =
   | Void
   | LocalTypes
 
-type MemoryTypes =
+and MemoryTypes =
   | Int8
   | Int16
   | LocalTypes
-
-
-type Statement =
-  | Block
-  | Expression
-
-type Block =
-  {
-    Statements: Statement list;
-  }
-
-
-type FunctionSignature =
-  {
-    ReturnType: ExpressionTypes;
-    ArgumentTypes: LocalTypes list;
-  }
-
-type Function =
-  {
-    Name: Symbol;
-    Signature: FunctionSignature;
-    Body: Block;
-  }
 
 
 type Expression =
@@ -85,6 +61,43 @@ type Expression =
   | Int64'imm             of System.Int64
   | Float32'imm           of System.Single
   | Float64'imm           of System.Double
+
+  | Call_direct           of Symbol * Expression list
+  | Call_indirect         of Expression * FunctionSignature * Expression list
+  | Addressof             of Symbol
+
+  | Comma                 of Expression * Expression
+  | Conditional           of Expression * Expression * Expression
+
+and FunctionSignature =
+  {
+    ReturnType: ExpressionTypes;
+    ArgumentTypes: LocalTypes list;
+  }
+
+and Block =
+  {
+    Statements: Statement list;
+  }
+
+and Statement =
+  | Block
+  | Expression
+  | If       of Expression * Block
+  | Do_while of Expression * Block
+  | Forever  of Block
+  | Continue
+  | Break
+  | Return   of Expression
+  // FIXME
+  | Switch
+
+and Function =
+  {
+    Name: Symbol;
+    Signature: FunctionSignature;
+    Body: Block;
+  }
 
 
 let test () =
