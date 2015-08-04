@@ -1,6 +1,7 @@
 module WebAssembly.SExpr
 
 open FParsec
+open System.Text
 
 // What I really want here is something along the lines of
 //  variant<Expression, Symbol, int, float> but I guess that's not possible in ML?
@@ -10,10 +11,25 @@ type Value =
   | Int32      of int32
   | Int64      of int64
   | Float      of float
+  with
+    override this.ToString() =
+      match this with
+      | Expression e      -> e.ToString()
+      | Symbol s          -> s.ToString()
+      | Int32  i32        -> i32.ToString()
+      | Int64  i64        -> i64.ToString()
+      | Float  f          -> f.ToString()
+  end
 
 and Symbol =
   | NamedSymbol     of string
   | AnonymousSymbol of int
+  with
+    override this.ToString() =
+      match this with
+      | NamedSymbol s     -> sprintf "@%s" s
+      | AnonymousSymbol i -> sprintf "@%i" i
+  end
 
 and Expression =
   {
@@ -21,7 +37,16 @@ and Expression =
     arguments: Value list
   }
   with
-    override this.ToString() = sprintf "(%s %A)" this.keyword this.arguments
+    override this.ToString() =
+      let result = 
+        StringBuilder()
+          .AppendFormat("({0}", this.keyword.ToString());
+
+      ignore (this.arguments |>
+        Seq.fold (fun (sb:System.Text.StringBuilder) (v:Value) -> sb.AppendFormat(" {0}", v.ToString())) result);
+
+      result.Append(")")
+        .ToString();
   end
 
 
@@ -34,7 +59,7 @@ module Parse =
     let isIdentifierFirstChar c = 
       isLetter c || 
       c = '_'
-    
+
     let isIdentifierChar c = 
       isLetter c || 
       isDigit c ||
