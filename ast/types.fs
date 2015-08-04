@@ -1,7 +1,7 @@
 module WebAssembly.AST
 
 type Symbol =
-  | NamedSymbol of string * int
+  | NamedSymbol of string
   | AnonymousSymbol of int
 
 
@@ -21,46 +21,27 @@ and MemoryTypes =
   | LocalTypes
 
 
+type NumericLiteral =
+  | Int32   of System.Int32
+  | Int64   of System.Int64
+  | Float32 of System.Single
+  | Float64 of System.Double
+
+
 type Expression =
-  | Int32'load_sx'int8    of Expression
-  | Int32'load_sx'int16   of Expression
-  | Int32'load_zx'int8    of Expression
-  | Int32'load_zx'int16   of Expression
-  | Int32'load'int32      of Expression
-
-  | Int64'load_sx'int8    of Expression
-  | Int64'load_sx'int16   of Expression
-  | Int64'load_sx'int32   of Expression
-  | Int64'load_zx'int8    of Expression
-  | Int64'load_zx'int16   of Expression
-  | Int64'load_zx'int32   of Expression
-  | Int64'load'int64      of Expression
-
-  | Float32'load'float32  of Expression
-  | Float64'load'float64  of Expression
+  | Load_sx               of Expression
+  | Load_zx               of Expression
+  | Load                  of Expression
 
   | Get_local             of Symbol
   | Get_global            of Symbol
 
-  | Int32'store'int8      of Expression * Expression
-  | Int32'store'int16     of Expression * Expression
-  | Int32'store'int32     of Expression * Expression
-
-  | Int64'store'int8      of Expression * Expression
-  | Int64'store'int16     of Expression * Expression
-  | Int64'store'int32     of Expression * Expression
-  | Int64'store'int64     of Expression * Expression
-
-  | Float32'store'float32 of Expression * Expression
-  | Float64'store'float64 of Expression * Expression
+  | Store                 of Expression * Expression
 
   | Set_local             of Symbol * Expression
   | Set_global            of Symbol * Expression
 
-  | Int32'imm             of System.Int32
-  | Int64'imm             of System.Int64
-  | Float32'imm           of System.Single
-  | Float64'imm           of System.Double
+  | Immediate             of NumericLiteral
 
   | Call_direct           of Symbol * Expression list
   | Call_indirect         of Expression * FunctionSignature * Expression list
@@ -69,126 +50,55 @@ type Expression =
   | Comma                 of Expression * Expression
   | Conditional           of Expression * Expression * Expression
 
-  | Int32'add             of Expression * Expression
-  | Int32'sub             of Expression * Expression
-  | Int32'mul             of Expression * Expression
-  | Int32'sdiv            of Expression * Expression
-  | Int32'udiv            of Expression * Expression
-  | Int32'srem            of Expression * Expression
-  | Int32'urem            of Expression * Expression
-  | Int32'and             of Expression * Expression
-  | Int32'ior             of Expression * Expression
-  | Int32'xor             of Expression * Expression
-  | Int32'shl             of Expression * Expression
-  | Int32'shr             of Expression * Expression
-  | Int32'sar             of Expression * Expression
-  | Int32'eq              of Expression * Expression
-  | Int32'slt             of Expression * Expression
-  | Int32'sle             of Expression * Expression
-  | Int32'ult             of Expression * Expression
-  | Int32'ule             of Expression * Expression
-  | Int32'sgt             of Expression * Expression
-  | Int32'sge             of Expression * Expression
-  | Int32'ugt             of Expression * Expression
-  | Int32'uge             of Expression * Expression
-  | Int32'clz             of Expression
-  | Int32'ctz             of Expression
-  | Int32'popcnt          of Expression
+  | Add                   of Expression * Expression
+  | Sub                   of Expression * Expression
+  | Mul                   of Expression * Expression
+  | Sdiv                  of Expression * Expression
+  | Udiv                  of Expression * Expression
+  | Srem                  of Expression * Expression
+  | Urem                  of Expression * Expression
+  | And                   of Expression * Expression
+  | Ior                   of Expression * Expression
+  | Xor                   of Expression * Expression
+  | Shl                   of Expression * Expression
+  | Shr                   of Expression * Expression
+  | Sar                   of Expression * Expression
+  | Eq                    of Expression * Expression
+  | Slt                   of Expression * Expression
+  | Sle                   of Expression * Expression
+  | Ult                   of Expression * Expression
+  | Ule                   of Expression * Expression
+  | Sgt                   of Expression * Expression
+  | Sge                   of Expression * Expression
+  | Ugt                   of Expression * Expression
+  | Uge                   of Expression * Expression
+  | Clz                   of Expression
+  | Ctz                   of Expression
+  | Popcnt                of Expression
 
-  | Int64'add             of Expression * Expression
-  | Int64'sub             of Expression * Expression
-  | Int64'mul             of Expression * Expression
-  | Int64'sdiv            of Expression * Expression
-  | Int64'udiv            of Expression * Expression
-  | Int64'srem            of Expression * Expression
-  | Int64'urem            of Expression * Expression
-  | Int64'and             of Expression * Expression
-  | Int64'ior             of Expression * Expression
-  | Int64'xor             of Expression * Expression
-  | Int64'shl             of Expression * Expression
-  | Int64'shr             of Expression * Expression
-  | Int64'sar             of Expression * Expression
-  | Int64'eq              of Expression * Expression
-  | Int64'slt             of Expression * Expression
-  | Int64'sle             of Expression * Expression
-  | Int64'ult             of Expression * Expression
-  | Int64'ule             of Expression * Expression
-  | Int64'sgt             of Expression * Expression
-  | Int64'sge             of Expression * Expression
-  | Int64'ugt             of Expression * Expression
-  | Int64'uge             of Expression * Expression
-  | Int64'clz             of Expression
-  | Int64'ctz             of Expression
-  | Int64'popcnt          of Expression
+  | Fdiv                  of Expression * Expression
+  | Fabs                  of Expression
+  | Fneg                  of Expression
+  | Copysign              of Expression * Expression
+  | Ceil                  of Expression
+  | Floor                 of Expression
+  | Trunc                 of Expression
+  | Nearestint            of Expression
+  | Sqrt                  of Expression
+  | Fmin                  of Expression * Expression
+  | Fmax                  of Expression * Expression
 
-  | Float32'add           of Expression * Expression
-  | Float32'sub           of Expression * Expression
-  | Float32'mul           of Expression * Expression
-  | Float32'div           of Expression * Expression
-  | Float32'abs           of Expression
-  | Float32'neg           of Expression
-  | Float32'copysign      of Expression * Expression
-  | Float32'ceil          of Expression
-  | Float32'floor         of Expression
-  | Float32'trunc         of Expression
-  | Float32'nearestint    of Expression
-  | Float32'eq            of Expression * Expression
-  | Float32'lt            of Expression * Expression
-  | Float32'le            of Expression * Expression
-  | Float32'gt            of Expression * Expression
-  | Float32'ge            of Expression * Expression
-  | Float32'sqrt          of Expression
-  | Float32'min           of Expression * Expression
-  | Float32'max           of Expression * Expression
+  | Cvt_signed            of Expression
+  | Cvt_unsigned          of Expression
+  | Reinterpret           of Expression
 
-  | Float64'add           of Expression * Expression
-  | Float64'sub           of Expression * Expression
-  | Float64'mul           of Expression * Expression
-  | Float64'div           of Expression * Expression
-  | Float64'abs           of Expression
-  | Float64'neg           of Expression
-  | Float64'copysign      of Expression * Expression
-  | Float64'ceil          of Expression
-  | Float64'floor         of Expression
-  | Float64'trunc         of Expression
-  | Float64'nearestint    of Expression
-  | Float64'eq            of Expression * Expression
-  | Float64'lt            of Expression * Expression
-  | Float64'le            of Expression * Expression
-  | Float64'gt            of Expression * Expression
-  | Float64'ge            of Expression * Expression
-  | Float64'sqrt          of Expression
-  | Float64'min           of Expression * Expression
-  | Float64'max           of Expression * Expression
+  | Int32'wrap'int64      of Expression
 
-  | Int32'wrap'int64             of Expression
-  | Int32'trunc_signed'float32   of Expression
-  | Int32'trunc_signed'float64   of Expression
-  | Int32'trunc_unsigned'float32 of Expression
-  | Int32'trunc_unsigned'float64 of Expression
-  | Int32'reinterpret'float32    of Expression
+  | Float32'demote'float64      of Expression
+  | Float64'promote'float32     of Expression
 
-  | Int64'extend_signed'int32    of Expression
-  | Int64'extend_unsigned'int32  of Expression
-  | Int64'trunc_signed'float32   of Expression
-  | Int64'trunc_signed'float64   of Expression
-  | Int64'trunc_unsigned'float32 of Expression
-  | Int64'trunc_unsigned'float64 of Expression
-  | Int64'reinterpret'float64    of Expression
-
-  | Float32'demote'float64       of Expression
-  | Float32'cvt_signed'int32     of Expression
-  | Float32'cvt_signed'int64     of Expression
-  | Float32'cvt_unsigned'int32   of Expression
-  | Float32'cvt_unsigned'int64   of Expression
-  | Float32'reinterpret'int32    of Expression
-
-  | Float64'promote'float32      of Expression
-  | Float64'cvt_signed'int32     of Expression
-  | Float64'cvt_signed'int64     of Expression
-  | Float64'cvt_unsigned'int32   of Expression
-  | Float64'cvt_unsigned'int64   of Expression
-  | Float64'reinterpret'int64    of Expression
+  | Int64'extend_signed'int32   of Expression
+  | Int64'extend_unsigned'int32 of Expression
 
 and FunctionSignature =
   {
@@ -222,5 +132,14 @@ and Function =
 
 
 let test () =
-  let loc = NamedSymbol("loc", 0)
-  Float32'store'float32(Get_local(loc), Float32'imm(3.5f))
+  let loc  = NamedSymbol("loc")
+  let glob = NamedSymbol("global")
+  let f    = Immediate(Float32(3.5f))
+  let f2   = Immediate(Float32(2.7f))
+  [
+    Set_local(loc, f);
+    Set_global(
+      glob,
+      Add(Get_local(loc), f2)
+    )
+  ]
