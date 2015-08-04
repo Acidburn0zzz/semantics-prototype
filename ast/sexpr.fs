@@ -7,6 +7,7 @@ open FParsec
 type Value =
   | Expression of Expression
   | Symbol     of Symbol
+  | Int32      of int32
   | Int64      of int64
   | Float      of float
 
@@ -30,7 +31,10 @@ module Parse =
   let AT     = pstring "@"
 
   let read_identifier =
-    let isIdentifierFirstChar c = isLetter c || c = '_'
+    let isIdentifierFirstChar c = 
+      isLetter c || 
+      c = '_'
+    
     let isIdentifierChar c = 
       isLetter c || 
       isDigit c ||
@@ -39,23 +43,21 @@ module Parse =
     many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
     .>> spaces
 
-  let read_named_symbol =
-    AT >>. read_identifier
-
-  let read_anonymous_symbol =
-    AT >>. pint32
-
   let read_symbol = 
+    AT >>.
     choice [
-      attempt read_named_symbol |>> Symbol.NamedSymbol;
-      read_anonymous_symbol     |>> Symbol.AnonymousSymbol;
+      attempt read_identifier |>> Symbol.NamedSymbol;
+      attempt pint32          |>> Symbol.AnonymousSymbol;
     ]
 
   // deal with recursive parser definition
   let read_sexpr, _read_sexpr = 
     createParserForwardedToRef<Expression, unit>()
 
-  let read_int_literal =
+  let read_int32_literal =
+    pint32 .>> notFollowedBy (pstring ".")
+
+  let read_int64_literal =
     pint64 .>> notFollowedBy (pstring ".")
 
   let read_float_literal =
@@ -65,7 +67,8 @@ module Parse =
     choice [
       read_sexpr                 |>> Value.Expression;
       read_symbol                |>> Value.Symbol;
-      attempt read_int_literal   |>> Value.Int64;
+      attempt read_int32_literal |>> Value.Int32;
+      attempt read_int64_literal |>> Value.Int64;
       attempt read_float_literal |>> Value.Float;
     ]
 

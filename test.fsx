@@ -10,7 +10,10 @@ let parseSExpr str =
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
 
 parseSExpr "(setlocal @localVar (add 5.0 3))"
-parseSExpr "(section:functions (function (return (add 5.0 1))))"
+parseSExpr "(section:functions (function @six (return (add 5.0 1))))"
+parseSExpr "(numbers 0x12AF 0xFFEEDDCCBBAA 3.71)"
 
 parseSExpr "(test"
-parseSExpr "(test (test (test 37 @a) @6) (@foo"
+parseSExpr "(a (b (c 37 @a) @6) (@foo"
+parseSExpr "@w"
+parseSExpr "(a @()))"
