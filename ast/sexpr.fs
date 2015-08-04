@@ -31,7 +31,10 @@ module Parse =
 
   let read_identifier =
     let isIdentifierFirstChar c = isLetter c || c = '_'
-    let isIdentifierChar c = isLetter c || isDigit c || c = '_' || c = '.' || c = ':'
+    let isIdentifierChar c = 
+      isLetter c || 
+      isDigit c ||
+      isAnyOf "_.:" c
 
     many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier"
     .>> spaces
@@ -44,8 +47,8 @@ module Parse =
 
   let read_symbol = 
     choice [
-      read_named_symbol     |>> Symbol.NamedSymbol;
-      read_anonymous_symbol |>> Symbol.AnonymousSymbol;
+      attempt read_named_symbol |>> Symbol.NamedSymbol;
+      read_anonymous_symbol     |>> Symbol.AnonymousSymbol;
     ]
 
   // deal with recursive parser definition
