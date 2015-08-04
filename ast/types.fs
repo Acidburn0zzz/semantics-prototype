@@ -1,28 +1,8 @@
 module WebAssembly.AST
 
 type Symbol =
-  | NamedSymbol of string
+  | NamedSymbol of string * int
   | AnonymousSymbol of int
-
-
-type Expression = interface end
-
-type Expression< 'T > = interface 
-  inherit Expression
-  end
-
-
-type Int8 = System.SByte
-
-type Int16 = System.Int16
-
-type Int32 = System.Int32
-
-type Int64 = System.Int64
-
-type Float32 = System.Single
-
-type Float64 = System.Double
 
 
 type LocalTypes =
@@ -39,13 +19,6 @@ type MemoryTypes =
   | Int8
   | Int16
   | LocalTypes
-
-
-type LocalVariable<'T>(symbol: Symbol) =
-  class end
-
-type GlobalVariable<'T>(symbol: Symbol) =
-  class end
 
 
 type Statement =
@@ -72,107 +45,48 @@ type Function =
   }
 
 
-module Abstract =
-  type load<'R, 'M> =
-    {
-      Address: Expression<Int32>;
-    }
-    interface Expression<'R>
+type Expression =
+  | Int32'load_sx'int8    of Expression
+  | Int32'load_sx'int16   of Expression
+  | Int32'load_zx'int8    of Expression
+  | Int32'load_zx'int16   of Expression
+  | Int32'load'int32      of Expression
 
-  type store<'M, 'V> =
-    {
-      Address: Expression<Int32>;
-      Value: Expression<'V>;
-    }
-    interface Expression
+  | Int64'load_sx'int8    of Expression
+  | Int64'load_sx'int16   of Expression
+  | Int64'load_sx'int32   of Expression
+  | Int64'load_zx'int8    of Expression
+  | Int64'load_zx'int16   of Expression
+  | Int64'load_zx'int32   of Expression
+  | Int64'load'int64      of Expression
 
-  type imm<'V>(Value: 'V) =
-    interface Expression<'V>    
+  | Float32'load'float32  of Expression
+  | Float64'load'float64  of Expression
 
+  | Get_local             of Symbol
+  | Get_global            of Symbol
 
-type int32'load_sx'int8 =
-  Abstract.load<Int32, Int8>
-type int32'load_sx'int16 =
-  Abstract.load<Int32, Int16>  
-type int32'load_zx'int8 =
-  Abstract.load<Int32, Int8>
-type int32'load_zx'int16 =
-  Abstract.load<Int32, Int16>
-type int32'load'int32 =
-  Abstract.load<Int32, Int32>
+  | Int32'store'int8      of Expression * Expression
+  | Int32'store'int16     of Expression * Expression
+  | Int32'store'int32     of Expression * Expression
 
-type int64'load_sx'int8 =
-  Abstract.load<Int64, Int8>
-type int64'load_sx'int16 =
-  Abstract.load<Int64, Int16>  
-type int64'load_sx'int32 =
-  Abstract.load<Int64, Int16>  
-type int64'load_zx'int8 =
-  Abstract.load<Int64, Int8>
-type int64'load_zx'int16 =
-  Abstract.load<Int64, Int16>  
-type int64'load_zx'int32 =
-  Abstract.load<Int64, Int16>  
-type int64'load'int64 =
-  Abstract.load<Int64, Int64>
+  | Int64'store'int8      of Expression * Expression
+  | Int64'store'int16     of Expression * Expression
+  | Int64'store'int32     of Expression * Expression
+  | Int64'store'int64     of Expression * Expression
 
-type float32'load'float32 =
-  Abstract.load<Float32, Float32>  
-type float64'load'float64 =
-  Abstract.load<Float64, Float64>  
+  | Float32'store'float32 of Expression * Expression
+  | Float64'store'float64 of Expression * Expression
 
-type int32'store'int8 =
-  Abstract.store<Int32, Int8>
-type int32'store'int16 =
-  Abstract.store<Int32, Int16>
-type int32'store'int32 =
-  Abstract.store<Int32, Int32>
+  | Set_local             of Symbol * Expression
+  | Set_global            of Symbol * Expression
 
-type int64'store'int8 =
-  Abstract.store<Int64, Int8>
-type int64'store'int16 =
-  Abstract.store<Int64, Int16>
-type int64'store'int32 =
-  Abstract.store<Int64, Int32>
-type int64'store'int64 =
-  Abstract.store<Int64, Int64>
-
-type float32'store'float32 =
-  Abstract.store<Float32, Float32>
-type float64'store'float64 =
-  Abstract.store<Float64, Float64>
-
-type int32'imm =
-  Abstract.imm<Int32>
-type int64'imm =
-  Abstract.imm<Int64>
-type float32'imm =
-  Abstract.imm<Float32>
-type float64'imm =
-  Abstract.imm<Float64>
-
-type get_local<'T>(Variable: LocalVariable<'T>) =
-  interface Expression<'T>
-
-type set_local<'T> =
-  {
-    Variable: LocalVariable<'T>;
-    Value: Expression<'T>;
-  }
-
-type get_global<'T>(Variable: GlobalVariable<'T>) =
-  interface Expression<'T>
-
-type store_global<'T> =
-  {
-    Variable: GlobalVariable<'T>;
-    Value: Expression<'T>;
-  }
+  | Int32'imm             of System.Int32
+  | Int64'imm             of System.Int64
+  | Float32'imm           of System.Single
+  | Float64'imm           of System.Double
 
 
 let test () =
-  let loc = LocalVariable<Int32>(NamedSymbol("loc"))
-  ({ 
-    Address = get_local<_>(loc);
-    Value = float32'imm(3.5f);
-  } : float32'store'float32)
+  let loc = NamedSymbol("loc", 0)
+  Float32'store'float32(Get_local(loc), Float32'imm(3.5f))
