@@ -161,6 +161,35 @@ type Expression =
   | Float64'min           of Expression * Expression
   | Float64'max           of Expression * Expression
 
+  | Int32'wrap'int64             of Expression
+  | Int32'trunc_signed'float32   of Expression
+  | Int32'trunc_signed'float64   of Expression
+  | Int32'trunc_unsigned'float32 of Expression
+  | Int32'trunc_unsigned'float64 of Expression
+  | Int32'reinterpret'float32    of Expression
+
+  | Int64'extend_signed'int32    of Expression
+  | Int64'extend_unsigned'int32  of Expression
+  | Int64'trunc_signed'float32   of Expression
+  | Int64'trunc_signed'float64   of Expression
+  | Int64'trunc_unsigned'float32 of Expression
+  | Int64'trunc_unsigned'float64 of Expression
+  | Int64'reinterpret'float64    of Expression
+
+  | Float32'demote'float64       of Expression
+  | Float32'cvt_signed'int32     of Expression
+  | Float32'cvt_signed'int64     of Expression
+  | Float32'cvt_unsigned'int32   of Expression
+  | Float32'cvt_unsigned'int64   of Expression
+  | Float32'reinterpret'int32    of Expression
+
+  | Float64'promote'float32      of Expression
+  | Float64'cvt_signed'int32     of Expression
+  | Float64'cvt_signed'int64     of Expression
+  | Float64'cvt_unsigned'int32   of Expression
+  | Float64'cvt_unsigned'int64   of Expression
+  | Float64'reinterpret'int64    of Expression
+
 and FunctionSignature =
   {
     ReturnType: ExpressionTypes;
