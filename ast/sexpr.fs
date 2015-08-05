@@ -84,33 +84,30 @@ module Parse =
     )
 
 
-let     symbolToStringInto s (sb:StringBuilder) =
+let     symbolToStringInto (sb:StringBuilder) s =
   match s with
   | NamedSymbol n     -> sb.AppendFormat("@{0}", n)
   | AnonymousSymbol i -> sb.AppendFormat("@{0}", i)
 
-let rec valueToStringInto v sb =
+let rec valueToStringInto sb v =
   match v with
-  | Expression e      -> toStringInto e sb
-  | Symbol s          -> symbolToStringInto s sb
+  | Expression e      -> toStringInto sb e
+  | Symbol s          -> symbolToStringInto sb s
   | Int32  i32        -> sb.Append(i32)
   | Int64  i64        -> sb.Append(i64)
   | Float  f          -> sb.AppendFormat("{0}f", f)
 
-and     toStringInto e sb =
+and     toStringInto sb e =
   ignore (
     sb.Append("(")
       .Append(e.keyword)
   );
 
-  (e.arguments |> Seq.fold
-    (fun sb v -> valueToStringInto v (sb.Append(" ")))
-    sb
-  )
+  (e.arguments |> Seq.fold valueToStringInto sb)
     .Append(")")
 
 let toString e =
-  (toStringInto e (StringBuilder()))
+  (toStringInto (StringBuilder()) e)
     .ToString();
 
 
