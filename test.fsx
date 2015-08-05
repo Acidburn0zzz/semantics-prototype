@@ -4,12 +4,13 @@
 #load "ast/sexpr.fs" "ast/types.fs"
 
 open FParsec
+open WebAssembly
 
 let parseSExpr str = 
   printfn "// '%s'\n" str
-  match WebAssembly.SExpr.fromString str with
+  match (SExpr.fromString str) with
   | Success(expr, _, _)         -> 
-    printfn "%s\n" (expr.ToString())
+    printfn "%s\n" (SExpr.toString expr)
     printfn "%A\n" expr
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
 

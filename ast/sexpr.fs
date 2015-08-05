@@ -83,38 +83,36 @@ module Parse =
       LPAREN >>. read_sexpr_body .>> spaces .>> RPAREN
     )
 
-(*
 
-let rec toString v : String =
-  match v with
-  | Value.Expression e ->
-    (e.arguments |>
-      Seq.fold
-        (fun (sb:System.Text.StringBuilder) (elt:Value) -> 
-          sb.AppendFormat(" {0}", toString elt))
-        (StringBuilder()
-          .AppendFormat("({0}", e.keyword))
-    )
-      .Append(")")
-      .ToString()
-  |
-
-let rec toString (s:Symbol) : String =
+let     symbolToStringInto s (sb:StringBuilder) =
   match s with
-  | NamedSymbol n     -> String.Format("@{0}", n)
-  | AnonymousSymbol i -> String.Format("@{0}", i)
+  | NamedSymbol n     -> sb.AppendFormat("@{0}", n)
+  | AnonymousSymbol i -> sb.AppendFormat("@{0}", i)
 
-let rec toString (v:Value) : String =
+let rec valueToStringInto v sb =
   match v with
-  | Expression e      -> (toString e)
-  | Symbol s          -> (toString s)
-  | Int32  i32        -> i32.ToString()
-  | Int64  i64        -> i64.ToString()
-  | Float  f          -> String.Format("{0}f", f)
+  | Expression e      -> toStringInto e sb
+  | Symbol s          -> symbolToStringInto s sb
+  | Int32  i32        -> sb.Append(i32)
+  | Int64  i64        -> sb.Append(i64)
+  | Float  f          -> sb.AppendFormat("{0}f", f)
 
-let rec toString (sexpr:Expression) : String =
+and     toStringInto e sb =
+  ignore (
+    sb.Append("(")
+      .Append(e.keyword)
+  );
 
-*)
+  (e.arguments |> Seq.fold
+    (fun sb v -> valueToStringInto v (sb.Append(" ")))
+    sb
+  )
+    .Append(")")
+
+let toString e =
+  (toStringInto e (StringBuilder()))
+    .ToString();
+
 
 let fromString str =
   run Parse.read_sexpr str
