@@ -89,7 +89,9 @@ let     symbolToStringInto (sb:StringBuilder) s =
   | NamedSymbol n     -> sb.AppendFormat("@{0}", n)
   | AnonymousSymbol i -> sb.AppendFormat("@{0}", i)
 
-let rec valueToStringInto sb v =
+let rec valueToStringInto (sb:StringBuilder) v =
+  ignore (sb.Append(" "))
+
   match v with
   | Expression e      -> toStringInto sb e
   | Symbol s          -> symbolToStringInto sb s
