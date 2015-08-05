@@ -6,3 +6,6 @@
 !**/packages/build/
 # library symlinks
 libs
+vs/bin
+vs/obj
+*.suo

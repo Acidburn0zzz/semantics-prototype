@@ -26,9 +26,5 @@ mono $NUGET restore -PackagesDirectory ./packages/
 # symlinks for convenient importing
 mkdir -p ./libs/
 
-FPARSEC=( "./packages/FParsec.*/lib/*/" )
-FPARSEC=${FPARSEC[0]}
-FPARSEC=`realpath $FPARSEC`
-
-ln -f -s $FPARSEC/FParsec.dll libs/FParsec.dll
-ln -f -s $FPARSEC/FParsecCS.dll libs/FParsecCS.dll
+FPARSEC=`realpath ./packages/FParsec.*/lib/net40-client/`
+ln -f -s $FPARSEC libs/FParsec

@@ -1,4 +1,6 @@
+#I "libs/FParsec"
 #r "FParsec.dll"
+#r "FParsecCS.dll"
 #load "ast/sexpr.fs" "ast/types.fs"
 
 open FParsec
