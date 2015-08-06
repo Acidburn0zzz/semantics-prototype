@@ -45,8 +45,8 @@ module Parse =
   let read_symbol = 
     (pstring "@") >>.
     choice [
-      attempt read_identifier |>> Symbol.NamedSymbol;
-      attempt pint32          |>> Symbol.AnonymousSymbol;
+      attempt read_identifier     |>> Symbol.NamedSymbol;
+      attempt (pint32 .>> spaces) |>> Symbol.AnonymousSymbol;
     ]
 
   let read_keyword =

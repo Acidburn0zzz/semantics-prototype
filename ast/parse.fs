@@ -8,41 +8,16 @@ open WebAssembly.AST.Module
 open Microsoft.FSharp.Reflection
 
 
-let symbolFromValue v =
-  match v with
-  | Symbol s -> Some s
-  | _ -> None
+let read_block =
+  spaces |>> (fun s -> 
+    ({
+      Statements = []
+    } : Block)
+  )
 
-let functionDeclarationFromValue v =
-  match v with
-  | Value.Expression s ->
-    None
-  | _ -> None
-
-let functionDefinitionFromValue v =
-  match v with
-  | Value.Expression s ->
-    None
-  | _ -> None
-
-let sectionFromSExpr sExpr =
-  let sectionName = sExpr.keyword.ToLowerInvariant();
-
-  match sectionName with
-  | "symboltable" ->
-    SymbolTable(sExpr.arguments |> List.choose symbolFromValue)
-
-  | "functiondeclarations" ->
-    FunctionDeclarations(sExpr.arguments |> List.choose functionDeclarationFromValue)
-
-  | "functiondefinitions" ->
-    FunctionDefinitions(sExpr.arguments |> List.choose functionDefinitionFromValue)
-
-  | _ ->
-    Unknown(sExpr.keyword)
 
 let sectionName s =
-  attempt (pstring s)
+  attempt (pstring "section:" >>. pstring s .>> spaces)
 
 let read_symbol_table =
   sectionName "symbols" >>. spaces >>.
@@ -50,55 +25,78 @@ let read_symbol_table =
     (readMany read_symbol) |>> SymbolTable
   )
 
-let read_localType =
-  read_keyword |>> (fun kw ->
-    match kw with
-    | "int32"   -> LocalTypes.Int32
-    | "int64"   -> LocalTypes.Int64
-    | "float32" -> LocalTypes.Float32
-    | "float64" -> LocalTypes.Float64
-  )
+let enumerant n v =
+  (pstring n) >>. (preturn v)
 
-let read_argument_declaration = 
+let read_localType =
+  (pstring ":") >>. choice [
+    enumerant "int32"   LocalTypes.Int32;
+    enumerant "int64"   LocalTypes.Int64;
+    enumerant "float32" LocalTypes.Float32;
+    enumerant "float64" LocalTypes.Float64;
+  ] .>> spaces
+
+let read_local_declaration = 
   read_localType .>> (opt read_symbol)
 
 let read_argument_types =
   readAbstractNamed "args" (
     spaces >>.
-    readMany read_argument_declaration
+    readMany read_local_declaration
+  )
+
+let read_local_types =
+  readAbstractNamed "locals" (
+    spaces >>.
+    readMany read_local_declaration
   )
 
 let read_declaration =
   readAbstractNamed "declaration" (
     (pipe3 
       read_symbol
-      read_localType
+      read_localType 
       read_argument_types
-      (fun name returnType argumentTypes ->
-        printfn "argumentTypes %A" argumentTypes;
+      (fun a b c ->
         {
-          Name          = name
-          ReturnType    = returnType;
-          ArgumentTypes = argumentTypes;
+          Name          = a;
+          ReturnType    = b;
+          ArgumentTypes = c;
         } : FunctionDeclaration
       )
     )
   )
 
 let read_declarations =
-  sectionName "declarations" >>. spaces >>. 
+  sectionName "declarations" >>.
     (readMany read_declaration) |>> FunctionDeclarations
 
+let read_definition =
+  readAbstractNamed "definition" (
+    (pipe3 
+      read_symbol
+      read_local_types
+      read_block
+      (fun a b c ->
+        {
+          Name          = a;
+          VariableTypes = b;
+          Body          = c;
+        } : FunctionDefinition
+      )
+    )
+  )
+
 let read_definitions =
-  sectionName "definitions" >>. spaces |>> (fun s -> FunctionDefinitions([]))
+  sectionName "definitions" >>.
+    (readMany read_definition) |>> FunctionDefinitions
 
 let read_section =
-  pstring "section:" >>. 
-    choice [
-      read_symbol_table;
-      read_declarations;
-      read_definitions;
-    ]
+  choice [
+    read_symbol_table;
+    read_declarations;
+    read_definitions;
+  ]
 
 let read_toplevel = 
   spaces >>. (readManyAbstract read_section) |>> (fun sections -> { Sections = sections })

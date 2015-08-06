@@ -137,7 +137,7 @@ and Block =
   }
 
 and Statement =
-  | Block
+  | Block      of Block
   | Expression of Expression
   | If         of Condition * Block
   | Do_while   of Condition * Block
