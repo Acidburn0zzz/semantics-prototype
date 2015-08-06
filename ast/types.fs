@@ -3,7 +3,9 @@ module WebAssembly.AST
 type Symbol =
   | NamedSymbol of string
   | AnonymousSymbol of int
-
+and  LocalVariable     = Symbol
+and  GlobalVariable    = Symbol
+and  FunctionReference = Symbol
 
 type LocalTypes =
   | Int32
@@ -28,27 +30,33 @@ type NumericLiteral =
   | Float64 of System.Double
 
 
-type Expression =
-  | Load_sx               of Expression
-  | Load_zx               of Expression
-  | Load                  of Expression
+type LoadExtensionTypes =
+  | NoExtend
+  | SignExtend
+  | ZeroExtend
 
-  | Get_local             of Symbol
-  | Get_global            of Symbol
 
-  | Store                 of Expression * Expression
+type Address   = Expression
+and  Condition = Expression
 
-  | Set_local             of Symbol * Expression
-  | Set_global            of Symbol * Expression
+and  Expression =
+  | Get_local             of LocalVariable
+  | Set_local             of LocalVariable  * Expression
+
+  | Get_global            of GlobalVariable
+  | Set_global            of GlobalVariable * Expression
+
+  | Load                  of MemoryTypes * Address * LoadExtensionTypes
+  | Store                 of MemoryTypes * Address * Expression
 
   | Immediate             of NumericLiteral
 
-  | Call_direct           of Symbol * Expression list
+  | Call_direct           of FunctionReference * Expression list
   | Call_indirect         of Expression * FunctionSignature * Expression list
-  | Addressof             of Symbol
+  | Addressof             of FunctionReference
 
   | Comma                 of Expression * Expression
-  | Conditional           of Expression * Expression * Expression
+  | Conditional           of Condition  * Expression * Expression
 
   // Int or float operations
   | Add                   of Expression * Expression
@@ -95,13 +103,12 @@ type Expression =
   | Cvt_unsigned          of Expression
   | Reinterpret           of Expression
 
-  | Int32'wrap'int64      of Expression
+  | Wrap                  of Expression
+  | Demote                of Expression
+  | Promote               of Expression
 
-  | Float32'demote'float64      of Expression
-  | Float64'promote'float32     of Expression
-
-  | Int64'extend_signed'int32   of Expression
-  | Int64'extend_unsigned'int32 of Expression
+  | Extend_signed         of Expression
+  | Extend_unsigned       of Expression
 
 and FunctionSignature =
   {
@@ -117,7 +124,7 @@ and Block =
 and Statement =
   | Block
   | Expression
-  | If       of Expression * Block
+  | If       of Condition  * Block
   | Do_while of Expression * Block
   | Forever  of Block
   | Continue
@@ -132,17 +139,3 @@ and Function =
     Signature: FunctionSignature;
     Body: Block;
   }
-
-
-let test () =
-  let loc  = NamedSymbol("loc")
-  let glob = NamedSymbol("global")
-  let f    = Immediate(Float32(3.5f))
-  let f2   = Immediate(Float32(2.7f))
-  [
-    Set_local(loc, f);
-    Set_global(
-      glob,
-      Add(Get_local(loc), f2)
-    )
-  ]
