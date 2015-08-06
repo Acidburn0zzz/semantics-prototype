@@ -142,7 +142,7 @@ and Statement =
   | If         of Condition * Block
   | Do_while   of Condition * Block
   | Forever    of Block
-  | Return     of LocalTypes * Expression
+  | Return     of Expression
   // FIXME
   | Continue
   | Break

@@ -9,17 +9,21 @@ open Microsoft.FSharp.Reflection
 
 
 let read_block =
-  spaces |>> (fun s -> 
-    ({
-      Statements = []
-    } : Block)
+  readAbstractNamed "block" (
+    (readMany read_sexpr) |>>
+    (fun sexprs ->
+      printfn "(block %A)" sexprs;
+      ({
+        Statements = []
+      } : Block)
+    )
   )
 
 
 let sectionName s =
-  attempt (pstring "section:" >>. pstring s .>> spaces)
+  attempt (pstring s .>> spaces)
 
-let read_symbol_table =
+let read_symbolTable =
   sectionName "symbols" >>. spaces >>.
   (
     (readMany read_symbol) |>> SymbolTable
@@ -92,14 +96,14 @@ let read_definitions =
     (readMany read_definition) |>> FunctionDefinitions
 
 let read_section =
-  choice [
-    read_symbol_table;
+  pstring "section:" >>. choice [
+    read_symbolTable;
     read_declarations;
     read_definitions;
   ]
 
-let read_toplevel = 
+let read_topLevel = 
   spaces >>. (readManyAbstract read_section) |>> (fun sections -> { Sections = sections })
 
 let topLevelFromString str =  
-  run read_toplevel str
+  run read_topLevel str

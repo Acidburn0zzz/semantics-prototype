@@ -46,11 +46,10 @@ parseModule """
         @result
         (add (get_argument @lhs) (get_argument @rhs))
       )
-      (return :int32 (get_local @result))
+      (return (get_local @result))
     )
   )
-)
-(section:custom)"""
+)"""
 
 (*
 parseSExpr "(setlocal @localVar (add 5.0 3))"

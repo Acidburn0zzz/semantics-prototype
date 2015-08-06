@@ -27,6 +27,7 @@ and Expression =
 
 module Parse =
   let readMany elt =
+    // FIXME: The spaces here is redundant and bad
     many (elt .>> spaces)
 
   let read_identifier =
@@ -80,14 +81,14 @@ module Parse =
       (fun keyword arguments -> { keyword = keyword; arguments = arguments })
 
   do _read_sexpr := (
-      (pstring "(") >>. read_sexpr_body .>> spaces .>> (pstring ")")
+      (pstring "(") >>. read_sexpr_body .>> spaces .>> (pstring ")") .>> spaces
     )
 
   let readAbstract body =
-    (pstring "(") >>. body .>> spaces .>> (pstring ")")
+    (pstring "(") >>. body .>> spaces .>> (pstring ")") .>> spaces
 
   let readAbstractNamed name body =
-    (pstring "(") >>. (pstring name) >>. spaces >>. body .>> spaces .>> (pstring ")")
+    (pstring "(") >>. (pstring name) >>. spaces >>. body .>> spaces .>> (pstring ")") .>> spaces
 
   let readManyAbstract body =
     (readMany (readAbstract body))
