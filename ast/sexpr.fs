@@ -8,6 +8,7 @@ open System.Text
 //  variant<Expression, Symbol, int, float> but I guess that's not possible in ML?
 type Value =
   | Expression of Expression
+  | Keyword    of string
   | Symbol     of Symbol
   | Int32      of int32
   | Int64      of int64
@@ -25,9 +26,8 @@ and Expression =
 
 
 module Parse =
-  let LPAREN = pstring "("
-  let RPAREN = pstring ")"
-  let AT     = pstring "@"
+  let readMany elt =
+    many (elt .>> spaces)
 
   let read_identifier =
     let isIdentifierFirstChar c = 
@@ -43,11 +43,14 @@ module Parse =
     .>> spaces
 
   let read_symbol = 
-    AT >>.
+    (pstring "@") >>.
     choice [
       attempt read_identifier |>> Symbol.NamedSymbol;
       attempt pint32          |>> Symbol.AnonymousSymbol;
     ]
+
+  let read_keyword =
+    (pstring ":") >>. read_identifier
 
   // deal with recursive parser definition
   let read_sexpr, _read_sexpr = 
@@ -62,26 +65,32 @@ module Parse =
   let read_float_literal =
     pfloat
 
-  let read_sexpr_argument = 
+  let read_value = 
     choice [
       read_sexpr                 |>> Value.Expression;
       read_symbol                |>> Value.Symbol;
+      read_keyword               |>> Value.Keyword;
       attempt read_int32_literal |>> Value.Int32;
       attempt read_int64_literal |>> Value.Int64;
       attempt read_float_literal |>> Value.Float;
     ]
 
-  let read_sexpr_arguments =
-    many (read_sexpr_argument .>> spaces)
-
   let read_sexpr_body =
-    pipe2 (read_identifier) 
-      (read_sexpr_arguments)
+    pipe2 read_identifier (readMany read_value)
       (fun keyword arguments -> { keyword = keyword; arguments = arguments })
 
   do _read_sexpr := (
-      LPAREN >>. read_sexpr_body .>> spaces .>> RPAREN
+      (pstring "(") >>. read_sexpr_body .>> spaces .>> (pstring ")")
     )
+
+  let readAbstract body =
+    (pstring "(") >>. body .>> spaces .>> (pstring ")")
+
+  let readAbstractNamed name body =
+    (pstring "(") >>. (pstring name) >>. spaces >>. body .>> spaces .>> (pstring ")")
+
+  let readManyAbstract body =
+    (readMany (readAbstract body))
 
 
 let     symbolToStringInto (sb:StringBuilder) s =
@@ -95,9 +104,10 @@ let rec valueToStringInto (sb:StringBuilder) v =
   match v with
   | Expression e      -> toStringInto sb e
   | Symbol s          -> symbolToStringInto sb s
+  | Keyword k         -> sb.AppendFormat(":{0}", k)
   | Int32  i32        -> sb.Append(i32)
   | Int64  i64        -> sb.Append(i64)
-  | Float  f          -> sb.AppendFormat("{0}f", f)
+  | Float  f          -> sb.AppendFormat("{0}", f)
 
 and     toStringInto sb e =
   ignore (

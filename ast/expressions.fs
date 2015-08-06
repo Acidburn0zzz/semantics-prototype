@@ -1,11 +1,10 @@
-module WebAssembly.AST
+namespace WebAssembly.AST
 
-type Symbol =
-  | NamedSymbol of string
-  | AnonymousSymbol of int
+// FIXME: Named symbols should be assigned an index by the parser
+type Symbol = WebAssembly.SExpr.Symbol
+
 and  LocalVariable     = Symbol
 and  GlobalVariable    = Symbol
-and  FunctionReference = Symbol
 
 type LocalTypes =
   | Int32
@@ -13,14 +12,26 @@ type LocalTypes =
   | Float32
   | Float64
 
-and ExpressionTypes =
-  | Void
-  | LocalTypes
+and  FromLocalType = LocalTypes
+and  ToLocalTypes  = LocalTypes
 
-and MemoryTypes =
+and  ExpressionTypes =
+  | Void
+  | Int32
+  | Int64
+  | Float32
+  | Float64
+
+and  MemoryTypes =
   | Int8
   | Int16
-  | LocalTypes
+  | Int32
+  | Int64
+  | Float32
+  | Float64
+
+and  FromMemoryType = MemoryTypes
+and  ToMemoryType   = MemoryTypes
 
 
 type NumericLiteral =
@@ -40,25 +51,32 @@ type Address   = Expression
 and  Condition = Expression
 
 and  Expression =
+  | Get_argument          of Symbol
+
   | Get_local             of LocalVariable
   | Set_local             of LocalVariable  * Expression
 
   | Get_global            of GlobalVariable
   | Set_global            of GlobalVariable * Expression
 
-  | Load                  of MemoryTypes * Address * LoadExtensionTypes
-  | Store                 of MemoryTypes * Address * Expression
+  | Load                  of Address * FromMemoryType
+  | LoadExtended          of Address * FromMemoryType * LoadExtensionTypes
 
-  | Immediate             of NumericLiteral
+  // This seems wrong. Should Store accept the target type in LocalType? Gross asymmetry
+  | Store                 of Address * ToMemoryType * Expression
+  | StoreConverted        of Address * ToMemoryType * Expression * FromLocalType
 
-  | Call_direct           of FunctionReference * Expression list
-  | Call_indirect         of Expression * FunctionSignature * Expression list
-  | Addressof             of FunctionReference
+  | Immediate             of LocalTypes * NumericLiteral
+
+  | Call_direct           of Symbol     * arguments: (Expression list)
+  | Call_indirect         of Expression * returnType: LocalTypes * argumentTypes: (LocalTypes list) * arguments: (Expression list)
+  | Addressof             of Symbol
 
   | Comma                 of Expression * Expression
   | Conditional           of Condition  * Expression * Expression
 
   // Int or float operations
+  // Some of these should probably be split into i/f versions because the semantics vary
   | Add                   of Expression * Expression
   | Mul                   of Expression * Expression
   | Sub                   of Expression * Expression
@@ -99,22 +117,19 @@ and  Expression =
   | Min                   of Expression * Expression
   | Max                   of Expression * Expression
 
-  | Cvt_signed            of Expression
-  | Cvt_unsigned          of Expression
-  | Reinterpret           of Expression
+  // Mixed int/float operations
+  | Trunc_signed          of FromLocalType * Expression
+  | Trunc_unsigned        of FromLocalType * Expression
+  | Cvt_signed            of FromLocalType * Expression
+  | Cvt_unsigned          of FromLocalType * Expression
+  | Reinterpret           of FromLocalType * Expression
 
+  // These are only valid for a single type so they're unambiguous
   | Wrap                  of Expression
   | Demote                of Expression
   | Promote               of Expression
-
   | Extend_signed         of Expression
   | Extend_unsigned       of Expression
-
-and FunctionSignature =
-  {
-    ReturnType: ExpressionTypes;
-    ArgumentTypes: LocalTypes list;
-  }
 
 and Block =
   {
@@ -123,19 +138,12 @@ and Block =
 
 and Statement =
   | Block
-  | Expression
-  | If       of Condition  * Block
-  | Do_while of Expression * Block
-  | Forever  of Block
+  | Expression of Expression
+  | If         of Condition * Block
+  | Do_while   of Condition * Block
+  | Forever    of Block
+  | Return     of LocalTypes * Expression
+  // FIXME
   | Continue
   | Break
-  | Return   of Expression
-  // FIXME
   | Switch
-
-and Function =
-  {
-    Name: Symbol;
-    Signature: FunctionSignature;
-    Body: Block;
-  }

@@ -58,8 +58,14 @@
     <Compile Include="..\ast\sexpr.fs">
       <Link>sexpr.fs</Link>
     </Compile>
-    <Compile Include="..\ast\types.fs">
-      <Link>types.fs</Link>
+    <Compile Include="..\ast\expressions.fs">
+      <Link>expressions.fs</Link>
+    </Compile>
+    <Compile Include="..\ast\module.fs">
+      <Link>module.fs</Link>
+    </Compile>
+    <Compile Include="..\ast\parse.fs">
+      <Link>parse.fs</Link>
     </Compile>
     <None Include="..\test.fsx">
       <Link>test.fsx</Link>
