@@ -10,6 +10,29 @@ open System
 open System.Reflection
 open System.Collections.Generic
 
+let _expression_lookup_table = 
+  ref (null : Dictionary<string, Func<SExpr.Expression, AST.Expression>>)
+
+let _statement_lookup_table =
+  ref (null : Dictionary<string, Func<SExpr.Expression, AST.Statement>>)
+
+
+// FIXME: gross
+let duFromString (ty:Type) (s:string) =
+    match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> String.Equals(case.Name, s, StringComparison.InvariantCultureIgnoreCase)) with
+    |[|case|] -> Some(FSharpValue.MakeUnion(case,[||]) :?> 'a)
+    |_ -> None
+
+let duFromKeyword (ty:Type) (kw:Value) =
+  match kw with
+  | Keyword s -> duFromString ty s
+  | _         -> None
+
+let astSymbolFromSExprSymbol s =
+  match s with
+  | SExpr.NamedSymbol     name -> AST.Symbol.NamedSymbol     name
+  | SExpr.AnonymousSymbol idx  -> AST.Symbol.AnonymousSymbol idx
+
 
 let rec _lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName sExpr =
   let caseCtorArgs = parseArguments sExpr
@@ -17,13 +40,31 @@ let rec _lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName sExpr =
   let result = (untypedCaseCtor(caseCtorArgs) : obj)
   result :?> 'T
 
-let rec _makeArgumentParser (ty : Type) =
+and     _makeArgumentParser (ty:Type) =
   if ty = typeof<AST.Expression> then
-    (fun (sValue : Value) -> null)
+    (fun (v : Value) ->
+      match v with
+      | Expression se -> 
+        (
+          match expressionFromSExpr se with
+          | Some e -> box e
+          | None   -> null
+        )
+    )
+  elif ty = typeof<AST.Symbol> then
+    (fun (v : Value) ->
+      match v with
+      | Symbol s -> box (astSymbolFromSExprSymbol s)
+    )
+  elif ty = typeof<AST.NumericLiteral> then
+    (fun (v : Value) -> null)
   else
-    (fun (sValue : Value) -> null)
+    (fun (v : Value) -> 
+      match duFromKeyword ty v with
+      | Some du -> du
+    )
 
-let rec _makeLookupTableCaseCtor<'T> case =
+and     _makeLookupTableCaseCtor<'T> case =
   let untypedCaseCtor = FSharpValue.PreComputeUnionConstructor case
   let caseName = case.Name.ToLowerInvariant()
   let caseFields = case.GetFields()
@@ -52,7 +93,7 @@ let rec _makeLookupTableCaseCtor<'T> case =
   let ctor = (_lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName)
   (caseName, ctor)
 
-let rec _makeLookupTable<'T> () =
+and     _makeLookupTable<'T> () =
   let table = new Dictionary<string, Func<SExpr.Expression, 'T>>()
   let cases = FSharpType.GetUnionCases(typeof<'T>)
 
@@ -63,17 +104,14 @@ let rec _makeLookupTable<'T> () =
   table
 
 
-let _expression_lookup_table = 
-  ref (null : Dictionary<string, Func<SExpr.Expression, AST.Expression>>)
-
-let rec getExpressionLookupTable () =
+and     getExpressionLookupTable () =
   if _expression_lookup_table.Value = null then
     (_expression_lookup_table := _makeLookupTable<AST.Expression> ())
     _expression_lookup_table.Value
   else
     _expression_lookup_table.Value
 
-let rec expressionFromSExpr sExpr =
+and     expressionFromSExpr sExpr =
   let name = sExpr.keyword.ToLowerInvariant()
   let table = getExpressionLookupTable ()
   let (found, ctor) = table.TryGetValue(name)
@@ -85,18 +123,14 @@ let rec expressionFromSExpr sExpr =
     printfn "No expression type named '%s'" name
     None    
 
-
-let _statement_lookup_table =
-  ref (null : Dictionary<string, Func<SExpr.Expression, AST.Statement>>)
-
-let rec getStatementLookupTable () =
+and     getStatementLookupTable () =
   if _statement_lookup_table.Value = null then
     _statement_lookup_table := _makeLookupTable<AST.Statement> ()
     _statement_lookup_table.Value
   else
     _statement_lookup_table.Value
 
-let rec statementFromSExpr sExpr =
+and     statementFromSExpr sExpr =
   let name = sExpr.keyword.ToLowerInvariant()
   let table = getStatementLookupTable ()
   let (found, ctor) = table.TryGetValue(name)
