@@ -2,6 +2,12 @@ namespace WebAssembly.AST.Module
 
 open WebAssembly.AST
 
+type LocalVariable =
+  {
+    Type: LocalTypes;
+    Name: Symbol;
+  }
+
 type TopLevel =
   {
     Sections: Section list;
@@ -17,12 +23,12 @@ and  FunctionDeclaration =
   {
     Name: Symbol;
     ReturnType: LocalTypes;
-    ArgumentTypes: LocalTypes list;
+    ArgumentTypes: LocalVariable list;
   }
 
 and  FunctionDefinition =
   {
     Name: Symbol;
-    VariableTypes: LocalTypes list;
+    LocalVariables: LocalVariable list;
     Body: Block;
   }

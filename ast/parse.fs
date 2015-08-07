@@ -180,19 +180,21 @@ let read_localType =
     enumerant "float64" LocalTypes.Float64;
   ] .>> spaces
 
-let read_local_declaration = 
-  read_localType .>> (opt read_symbol)
+let read_variable_declaration =
+  pipe2 
+    read_localType read_symbol 
+    (fun t s -> { Name = s; Type = t })
 
 let read_argument_types =
   readAbstractNamed "args" (
     spaces >>.
-    readMany read_local_declaration
+    readMany read_variable_declaration
   )
 
-let read_local_types =
+let read_local_variables =
   readAbstractNamed "locals" (
     spaces >>.
-    readMany read_local_declaration
+    readMany read_variable_declaration
   )
 
 let read_declaration =
@@ -219,13 +221,13 @@ let read_definition =
   readAbstractNamed "definition" (
     (pipe3 
       read_symbol
-      read_local_types
+      read_local_variables
       read_block
       (fun a b c ->
         {
-          Name          = a;
-          VariableTypes = b;
-          Body          = c;
+          Name           = a;
+          LocalVariables = b;
+          Body           = c;
         } : FunctionDefinition
       )
     )
