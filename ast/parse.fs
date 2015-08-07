@@ -6,15 +6,98 @@ open WebAssembly.SExpr
 open WebAssembly.SExpr.Parse
 open WebAssembly.AST.Module
 open Microsoft.FSharp.Reflection
+open System
+open System.Collections.Generic
 
+
+let rec _lookupTableCaseCtor<'T> untypedCaseCtor caseFieldCount caseName sExpr =
+  let caseCtorArgs = Array.zeroCreate 0
+  if not (caseCtorArgs.Length = caseFieldCount) then
+    raise (
+      new ArgumentException(
+        String.Format(
+          "{0} expects {1} argument(s), got {2}", caseName, caseFieldCount, caseCtorArgs.Length
+        )
+      )
+    )
+
+  let result = (untypedCaseCtor(caseCtorArgs) : obj)
+  result :?> 'T
+
+let rec _makeLookupTableCaseCtor<'T> case =
+  let untypedCaseCtor = FSharpValue.PreComputeUnionConstructor case
+  let caseName = case.Name.ToLowerInvariant()
+  let caseFields = case.GetFields()
+  let ctor = (_lookupTableCaseCtor<'T> untypedCaseCtor caseFields.Length caseName)
+  (caseName, ctor)
+
+let rec _makeLookupTable<'T> () =
+  let table = new Dictionary<string, Func<SExpr.Expression, 'T>>()
+  let cases = FSharpType.GetUnionCases(typeof<'T>)
+
+  for case in cases do
+    let (caseName, ctor) = _makeLookupTableCaseCtor<'T> case
+    table.Add(caseName, Func<SExpr.Expression, 'T>(ctor))
+
+  table
+
+
+let _expression_lookup_table = 
+  ref (null : Dictionary<string, Func<SExpr.Expression, AST.Expression>>)
+
+let rec getExpressionLookupTable () =
+  if _expression_lookup_table.Value = null then
+    (_expression_lookup_table := _makeLookupTable<AST.Expression> ())
+    _expression_lookup_table.Value
+  else
+    _expression_lookup_table.Value
+
+let expressionFromSExpr sExpr =
+  let name = sExpr.keyword.ToLowerInvariant()
+  let table = getExpressionLookupTable ()
+  let (found, ctor) = table.TryGetValue(name)
+
+  if found then
+    let result = ctor.Invoke(sExpr)
+    Some result
+  else
+    printfn "No expression type named '%s'" name
+    None    
+
+let _statement_lookup_table =
+  ref (null : Dictionary<string, Func<SExpr.Expression, AST.Statement>>)
+
+let rec getStatementLookupTable () =
+  if _statement_lookup_table.Value = null then
+    _statement_lookup_table := _makeLookupTable<AST.Statement> ()
+    _statement_lookup_table.Value
+  else
+    _statement_lookup_table.Value
+
+let statementFromSExpr sExpr =
+  let name = sExpr.keyword.ToLowerInvariant()
+  let table = getStatementLookupTable ()
+  let (found, ctor) = table.TryGetValue(name)
+
+  if found then
+    let result = ctor.Invoke(sExpr)
+    Some result
+  else
+    let maybeExpression = expressionFromSExpr sExpr
+    match maybeExpression with
+    | Some e ->
+      Some (AST.Statement.Expression e)
+    | None ->
+      printfn "No statement type named '%s'" name
+      None
 
 let read_block =
   readAbstractNamed "block" (
     (readMany read_sexpr) |>>
-    (fun sexprs ->
-      printfn "(block %A)" sexprs;
+    (fun sExprs ->
+      printfn "(block %A)" sExprs;
       ({
-        Statements = []
+        Statements = List.choose statementFromSExpr sExprs
       } : Block)
     )
   )
