@@ -10,16 +10,8 @@ open System
 open System.Collections.Generic
 
 
-let rec _lookupTableCaseCtor<'T> untypedCaseCtor caseFieldCount caseName sExpr =
-  let caseCtorArgs = Array.zeroCreate 0
-  if not (caseCtorArgs.Length = caseFieldCount) then
-    raise (
-      new ArgumentException(
-        String.Format(
-          "{0} expects {1} argument(s), got {2}", caseName, caseFieldCount, caseCtorArgs.Length
-        )
-      )
-    )
+let rec _lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName sExpr =
+  let caseCtorArgs = parseArguments sExpr
 
   let result = (untypedCaseCtor(caseCtorArgs) : obj)
   result :?> 'T
@@ -28,7 +20,21 @@ let rec _makeLookupTableCaseCtor<'T> case =
   let untypedCaseCtor = FSharpValue.PreComputeUnionConstructor case
   let caseName = case.Name.ToLowerInvariant()
   let caseFields = case.GetFields()
-  let ctor = (_lookupTableCaseCtor<'T> untypedCaseCtor caseFields.Length caseName)
+
+  let parseArguments = (fun sExpr ->
+    if not (sExpr.arguments.Length = caseFields.Length) then
+      raise (
+        new ArgumentException(
+          String.Format(
+            "{0} expects {1} argument(s), got {2}", caseName, caseFields.Length, sExpr.arguments.Length
+          )
+        )
+      )
+
+    Array.zeroCreate sExpr.arguments.Length
+  )
+
+  let ctor = (_lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName)
   (caseName, ctor)
 
 let rec _makeLookupTable<'T> () =
@@ -52,7 +58,7 @@ let rec getExpressionLookupTable () =
   else
     _expression_lookup_table.Value
 
-let expressionFromSExpr sExpr =
+let rec expressionFromSExpr sExpr =
   let name = sExpr.keyword.ToLowerInvariant()
   let table = getExpressionLookupTable ()
   let (found, ctor) = table.TryGetValue(name)
@@ -64,6 +70,7 @@ let expressionFromSExpr sExpr =
     printfn "No expression type named '%s'" name
     None    
 
+
 let _statement_lookup_table =
   ref (null : Dictionary<string, Func<SExpr.Expression, AST.Statement>>)
 
@@ -74,7 +81,7 @@ let rec getStatementLookupTable () =
   else
     _statement_lookup_table.Value
 
-let statementFromSExpr sExpr =
+let rec statementFromSExpr sExpr =
   let name = sExpr.keyword.ToLowerInvariant()
   let table = getStatementLookupTable ()
   let (found, ctor) = table.TryGetValue(name)
@@ -90,6 +97,7 @@ let statementFromSExpr sExpr =
     | None ->
       printfn "No statement type named '%s'" name
       None
+
 
 let read_block =
   readAbstractNamed "block" (
