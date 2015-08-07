@@ -7,6 +7,7 @@ open WebAssembly.SExpr.Parse
 open WebAssembly.AST.Module
 open Microsoft.FSharp.Reflection
 open System
+open System.Reflection
 open System.Collections.Generic
 
 
@@ -16,12 +17,21 @@ let rec _lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName sExpr =
   let result = (untypedCaseCtor(caseCtorArgs) : obj)
   result :?> 'T
 
+let rec _makeArgumentParser (ty : Type) =
+  if ty = typeof<AST.Expression> then
+    (fun (sValue : Value) -> null)
+  else
+    (fun (sValue : Value) -> null)
+
 let rec _makeLookupTableCaseCtor<'T> case =
   let untypedCaseCtor = FSharpValue.PreComputeUnionConstructor case
   let caseName = case.Name.ToLowerInvariant()
   let caseFields = case.GetFields()
 
-  let parseArguments = (fun sExpr ->
+  let argumentParsers =
+    Array.map (fun (p : PropertyInfo) -> _makeArgumentParser p.PropertyType) caseFields
+
+  let parseArguments = (fun (sExpr : SExpr.Expression) ->
     if not (sExpr.arguments.Length = caseFields.Length) then
       raise (
         new ArgumentException(
@@ -31,7 +41,12 @@ let rec _makeLookupTableCaseCtor<'T> case =
         )
       )
 
-    Array.zeroCreate sExpr.arguments.Length
+    let result = Array.zeroCreate caseFields.Length
+    for i = 0 to caseFields.Length - 1 do
+      let parsedValue = argumentParsers.[i] sExpr.arguments.[i];
+      result.[i] <- parsedValue;
+
+    result
   )
 
   let ctor = (_lookupTableCaseCtor<'T> untypedCaseCtor parseArguments caseName)
