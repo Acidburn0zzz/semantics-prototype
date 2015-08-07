@@ -41,8 +41,7 @@ type NumericLiteral =
   | Float64 of System.Double
 
 
-type LoadExtensionTypes =
-  | NoExtend
+type LengthExtensionTypes =
   | SignExtend
   | ZeroExtend
 
@@ -59,12 +58,12 @@ and  Expression =
   | Get_global            of GlobalVariable
   | Set_global            of GlobalVariable * Expression
 
-  | Load                  of Address * FromMemoryType
-  | LoadExtended          of Address * FromMemoryType * LoadExtensionTypes
+  | Load                  of Address    * FromMemoryType
+  | LoadExtended          of Address    * FromMemoryType * LengthExtensionTypes
 
   // This seems wrong. Should Store accept the target type in LocalType? Gross asymmetry
-  | Store                 of Address * ToMemoryType * Expression
-  | StoreConverted        of Address * ToMemoryType * Expression * FromLocalType
+  | Store                 of Address    * ToMemoryType * Expression
+  | StoreConverted        of Address    * ToMemoryType * Expression * FromLocalType
 
   | Immediate             of LocalTypes * NumericLiteral
 
@@ -76,18 +75,17 @@ and  Expression =
   | Conditional           of Condition  * Expression * Expression
 
   // Int or float operations
-  // Some of these should probably be split into i/f versions because the semantics vary
-  | Add                   of Expression * Expression
-  | Mul                   of Expression * Expression
-  | Sub                   of Expression * Expression
   | Eq                    of Expression * Expression
   | Slt                   of Expression * Expression
   | Sle                   of Expression * Expression
   | Sgt                   of Expression * Expression
   | Sge                   of Expression * Expression
-  | Div                   of Expression * Expression
 
   // Int-only operations
+  | Add                   of Expression * Expression
+  | Mul                   of Expression * Expression
+  | Sub                   of Expression * Expression
+  | Sdiv                  of Expression * Expression
   | Udiv                  of Expression * Expression
   | Srem                  of Expression * Expression
   | Urem                  of Expression * Expression
@@ -106,6 +104,10 @@ and  Expression =
   | Popcnt                of Expression
 
   // Float-only operations
+  | Fadd                  of Expression * Expression
+  | Fmul                  of Expression * Expression
+  | Fsub                  of Expression * Expression
+  | Fdiv                  of Expression * Expression
   | Abs                   of Expression
   | Neg                   of Expression
   | Copysign              of Expression * Expression
@@ -128,8 +130,7 @@ and  Expression =
   | Wrap                  of Expression
   | Demote                of Expression
   | Promote               of Expression
-  | Extend_signed         of Expression
-  | Extend_unsigned       of Expression
+  | Extend                of Expression * LengthExtensionTypes
 
 and Block =
   {
