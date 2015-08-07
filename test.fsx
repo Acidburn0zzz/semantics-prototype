@@ -7,7 +7,7 @@ open FParsec
 open WebAssembly
 
 let parseSExpr str = 
-  printfn "// '%s'\n" str
+  printfn "// \"%s\" \n" str
   match (SExpr.fromString str) with
   | Success(expr, _, _)         -> 
     printfn "%s\n" (SExpr.toString expr)
@@ -15,7 +15,7 @@ let parseSExpr str =
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
 
 let parseModule str =
-  printfn "// '%s'\n" str
+  printfn "// \"\"\"%s\"\"\" \n" str
   match (AST.Parse.topLevelFromString str) with
   | Success(expr, _, _)         -> 
     printfn "%A\n" expr

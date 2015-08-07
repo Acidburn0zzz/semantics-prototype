@@ -48,7 +48,6 @@ and     _makeArgumentParser (ty:Type) =
         (
           match expressionFromSExpr se with
           | Some e -> box e
-          | None   -> null
         )
     )
   elif ty = typeof<AST.Symbol> then
@@ -57,7 +56,10 @@ and     _makeArgumentParser (ty:Type) =
       | Symbol s -> box (astSymbolFromSExprSymbol s)
     )
   elif ty = typeof<AST.NumericLiteral> then
-    (fun (v : Value) -> null)
+    (fun (v : Value) -> 
+      printfn "FIXME: NumericLiteral parser not implemented"
+      null
+    )
   else
     (fun (v : Value) -> 
       match duFromKeyword ty v with
@@ -152,7 +154,6 @@ let read_block =
   readAbstractNamed "block" (
     (readMany read_sexpr) |>>
     (fun sExprs ->
-      printfn "(block %A)" sExprs;
       ({
         Statements = List.choose statementFromSExpr sExprs
       } : Block)
