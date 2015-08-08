@@ -11,17 +11,56 @@ open System.Reflection
 open System.Collections.Generic
 
 
-type SymbolScope() =
-  member val table = new Dictionary<string, int>()
+[<AllowNullLiteral>]
+type SymbolScope(parent: SymbolScope) =
+  class
+    member val table = new Dictionary<string, int>()
+
+    member this.TryGet(name) =
+      let (exists, id) = this.table.TryGetValue(name)
+      if exists then
+        (true, id)
+      elif not (parent = null) then
+        parent.TryGet(name)
+      else
+        (false, 0)
+
+    member this.GetIndexOffset() =
+      if parent = null then
+        this.table.Count
+      else
+        this.table.Count + parent.GetIndexOffset()
+
+    member this.Add(name) =
+      let newId = this.GetIndexOffset();
+      this.table.Add(name, newId)
+      newId
+
+  end
+
+let makeScope () =
+  new SymbolScope(null)
+
+let makeChildScope parent =
+  new SymbolScope(parent)
 
 let assignNumberToSymbol (scope : SymbolScope) name =
-  let (exists, id) = scope.table.TryGetValue(name)
+  let (exists, id) = scope.TryGet(name)
   if exists then
     id
   else
-    let newId = scope.table.Count;
-    scope.table.Add(name, newId)
-    newId
+    scope.Add(name)
+
+let existingNamedSymbolInScope (scope : SymbolScope) name =
+  let (exists, id) = scope.TryGet(name)
+  if exists then
+    AST.Symbol.NamedSymbol(id, name)  
+  else
+    raise (new Exception(sprintf "No symbol named '%s' defined in this scope" name))
+
+let newNamedSymbolInScope scope name =
+  let idx = assignNumberToSymbol scope name
+  AST.Symbol.NamedSymbol(idx, name)  
 
 
 type ParseResult =
@@ -52,14 +91,11 @@ let duGetCases (ty:Type) =
   result
 
 
-let namedSymbolInScope scope name =
-  let idx = assignNumberToSymbol scope name
-  AST.Symbol.NamedSymbol(idx, name)  
-
 let astSymbolFromSExprSymbol scope s =
   match s with
   | SExpr.NamedSymbol     name -> 
-    namedSymbolInScope scope name
+    // Any names used inside an AST expression should have already been defined
+    existingNamedSymbolInScope scope name
   | SExpr.AnonymousSymbol idx  -> AST.Symbol.AnonymousSymbol(idx)
 
 
@@ -247,7 +283,7 @@ and     blockFromSExpr scope sExpr =
 let read_numbered_symbol scope = 
   (pstring "@") >>.
   choice [
-    attempt read_identifier     |>> namedSymbolInScope scope;
+    attempt read_identifier     |>> newNamedSymbolInScope scope;
     attempt (pint32 .>> spaces) |>> AST.Symbol.AnonymousSymbol;
   ]
 
@@ -319,27 +355,30 @@ let read_declarations scope =
   sectionName "declarations" >>.
     (readMany (read_declaration scope)) |>> FunctionDeclarations
 
+let read_definition_body scope functionName =
+  let childScope = makeChildScope scope
+
+  (pipe3
+    // (args ...)
+    (read_argument_declarations childScope)
+    // optional (locals ...)
+    (attempt (read_local_declarations childScope) <|>% [])
+    // function body
+    (read_block childScope)
+
+    (fun a b c ->
+      {
+        Name           = functionName;
+        Arguments      = a;
+        LocalVariables = b;
+        Body           = c;
+      } : FunctionDefinition
+    )
+  )
+
 let read_definition scope =
   readAbstractNamed "definition" (
-    (pipe4 
-      // function name
-      (read_numbered_symbol scope)
-      // (args ...)
-      (read_argument_declarations scope)
-      // optional (locals ...)
-      (attempt (read_local_declarations scope) <|>% [])
-      // function body
-      (read_block scope)
-
-      (fun a b c d ->
-        {
-          Name           = a;
-          Arguments      = b;
-          LocalVariables = c;
-          Body           = d;
-        } : FunctionDefinition
-      )
-    )
+    (read_numbered_symbol scope) >>= (read_definition_body scope)
   )
 
 let read_definitions scope =
@@ -355,7 +394,7 @@ let read_section scope =
   ]
 
 let read_topLevel () = 
-  let moduleScope = new SymbolScope()
+  let moduleScope = makeScope ()
   spaces >>. (readManyAbstract (read_section moduleScope)) |>> (fun sections -> { Sections = sections })
 
 let topLevelFromString str =  
