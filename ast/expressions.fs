@@ -1,7 +1,9 @@
 namespace WebAssembly.AST
 
 // FIXME: Named symbols should be assigned an index by the parser
-type Symbol = WebAssembly.SExpr.Symbol
+type Symbol =
+  | AnonymousSymbol of int
+  | NamedSymbol     of int * string
 
 and  LocalVariable     = Symbol
 and  GlobalVariable    = Symbol
@@ -131,6 +133,9 @@ and  Expression =
   | Demote                of Expression
   | Promote               of Expression
   | Extend                of Expression * LengthExtensionTypes
+
+  // Compile-time type assertion
+  | TypeAssertion         of LocalTypes * Expression
 
 and Block =
   {

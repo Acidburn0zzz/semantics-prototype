@@ -23,12 +23,13 @@ and  FunctionDeclaration =
   {
     Name: Symbol;
     ReturnType: LocalTypes;
-    ArgumentTypes: LocalVariable list;
+    ArgumentTypes: LocalTypes list;
   }
 
 and  FunctionDefinition =
   {
     Name: Symbol;
+    Arguments: LocalVariable list;
     LocalVariables: LocalVariable list;
     Body: Block;
   }

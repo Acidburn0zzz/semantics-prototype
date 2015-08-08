@@ -55,7 +55,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <None Include="App.config" />
-    <Compile Include="..\ast\sexpr.fs">
+    <Compile Include="..\sexpr\sexpr.fs">
       <Link>sexpr.fs</Link>
     </Compile>
     <Compile Include="..\ast\expressions.fs">
@@ -64,7 +64,7 @@
     <Compile Include="..\ast\module.fs">
       <Link>module.fs</Link>
     </Compile>
-    <Compile Include="..\ast\parse.fs">
+    <Compile Include="..\text-decoder\parse.fs">
       <Link>parse.fs</Link>
     </Compile>
     <None Include="..\test.fsx">

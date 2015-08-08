@@ -1,7 +1,7 @@
 #I "libs/FParsec"
 #r "FParsec.dll"
 #r "FParsecCS.dll"
-#load "ast/sexpr.fs" "ast/expressions.fs" "ast/module.fs" "ast/parse.fs"
+#load "sexpr/sexpr.fs" "ast/expressions.fs" "ast/module.fs" "text-decoder/parse.fs"
 
 open FParsec
 open WebAssembly
@@ -22,31 +22,43 @@ let parseModule str =
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
  
 parseModule """
-(section:symbols
+(section.symbols
   @add
 )
-(section:declarations
-  (declaration 
-    @add 
-    :int32 
+(section.declarations
+  (declaration :int32 @add :int32 :int32)
+  (declaration :int32 @add_into :int32 :int32 :int32)
+)
+(section.definitions
+  (definition
+    @add
     (args
       :int32 @lhs
       :int32 @rhs
     )
-  )
-)
-(section:definitions
-  (definition
-    @add
     (locals
       :int32 @result
     )
     (block
       (set_local
         @result
-        (add (get_argument @lhs) (get_argument @rhs))
+        (int32.add (int32.get_argument @lhs) (int32.get_argument @rhs))
       )
-      (return (get_local @result))
+      (return (int32.get_local @result))
+    )
+  )
+  (definition
+    @add_into
+    (args
+      :int32 @destination
+      :int32 @lhs
+      :int32 @rhs
+    )
+    (block
+      (store 
+        (int32.get_argument @destination) :int32
+        (int32.add (int32.get_argument @lhs) (int32.get_argument @rhs))
+      )
     )
   )
 )"""
