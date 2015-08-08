@@ -271,11 +271,15 @@ and     blockFromSExpr scope sExpr =
           Statement.Void
 
       | _ ->
-        err := "Expected expression"
+        err := sprintf "Expected expression in block, got %A" elt
         Statement.Void
       )        
     )
-    Success result
+
+    if err.Value = null then
+      Success result
+    else
+      Failure err.Value
 
   else
     statementFromSExpr scope sExpr
