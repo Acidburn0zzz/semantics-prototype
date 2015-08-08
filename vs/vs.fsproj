@@ -56,16 +56,25 @@
   <ItemGroup>
     <None Include="App.config" />
     <Compile Include="..\sexpr\sexpr.fs">
-      <Link>sexpr.fs</Link>
+      <Link>sexpr\sexpr.fs</Link>
     </Compile>
     <Compile Include="..\ast\expressions.fs">
-      <Link>expressions.fs</Link>
+      <Link>ast\expressions.fs</Link>
     </Compile>
     <Compile Include="..\ast\module.fs">
-      <Link>module.fs</Link>
+      <Link>ast\module.fs</Link>
+    </Compile>
+    <Compile Include="..\text-decoder\symbols.fs">
+      <Link>text-decoder\symbols.fs</Link>
+    </Compile>
+    <Compile Include="..\text-decoder\sexpr-to-ast.fs">
+      <Link>text-decoder\sexpr-to-ast.fs</Link>
     </Compile>
     <Compile Include="..\text-decoder\parse.fs">
-      <Link>parse.fs</Link>
+      <Link>text-decoder\parse.fs</Link>
+    </Compile>
+    <Compile Include="..\semantics\validate.fs">
+      <Link>semantics\validate.fs</Link>
     </Compile>
     <None Include="..\test.fsx">
       <Link>test.fsx</Link>

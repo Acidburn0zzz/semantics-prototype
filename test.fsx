@@ -1,7 +1,9 @@
 #I "libs/FParsec"
 #r "FParsec.dll"
 #r "FParsecCS.dll"
-#load "sexpr/sexpr.fs" "ast/expressions.fs" "ast/module.fs" "text-decoder/parse.fs"
+#load "sexpr/sexpr.fs"
+#load "ast/expressions.fs" "ast/module.fs" 
+#load "text-decoder/symbols.fs" "text-decoder/parse.fs"
 
 open FParsec
 open WebAssembly
