@@ -12,18 +12,29 @@ let _int32   = ExpressionTypes.Int32
 
 type ValidationResult =
   | Ok
-  | Error of string
+  | Error of message: string * location: ErrorLocation
+
+and  ErrorLocation =
+  | AtExpression            of Expression
+  | AtExpressionInStatement of Expression * Statement
+  | AtStatement             of Statement
+  | AtSection               of Section
 
 
 let failedValidation vr =
   match vr with
-  | Error e -> Some e
-  | Ok      -> None
+  | Error (e, loc) -> Some (e, loc)
+  | Ok             -> None
 
 let allOk results =
   match results |> Seq.tryPick failedValidation with
-  | Some e -> Error e
-  | None   -> Ok
+  | Some (e, loc) -> Error (e, loc)
+  | None          -> Ok
+
+let allOkLazy results =
+  match results |> Seq.tryPick (fun (lr : Lazy<ValidationResult>) -> failedValidation (lr.Force())) with
+  | Some (e, loc) -> Error (e, loc)
+  | None          -> Ok
 
 let checkedValidate validator =
   fun v -> failedValidation (validator v)
@@ -33,14 +44,16 @@ let validateList validator list =
   | Some e -> Error e
   | None   -> Ok
 
-
-let checkType expected actual =
+let checkType expected actual loc =
   if expected = actual then
     Ok
   else
-    Error (sprintf "Expected type %A but type was %A" expected actual)
+    Error(
+      sprintf "Expected type %A but type was %A" expected actual,
+      AtExpression(loc)
+    )
 
-let checkIntegral et =
+let checkIntegral et loc =
   match et with
   | ExpressionTypes.Int32
   | ExpressionTypes.Int64 ->
@@ -48,7 +61,7 @@ let checkIntegral et =
   | ExpressionTypes.Void
   | ExpressionTypes.Float32
   | ExpressionTypes.Float64 ->
-    Error "Expected integral type"
+    Error("Expected integral type", AtExpression(loc))
 
 
 let getReturnType fd =
@@ -71,10 +84,10 @@ let getLocalType fd localName =
 let rec validateExpressionExpecting expectedType expr fd =
   match expr with
   | Get_argument arg ->
-    checkType expectedType (getArgumentType fd arg)
+    expr |> checkType expectedType (getArgumentType fd arg)
 
   | Get_local loc ->
-    checkType expectedType (getLocalType fd loc)
+    expr |> checkType expectedType (getLocalType fd loc)
 
   | Set_local(loc, value) ->
     fd |> validateExpressionExpecting (getLocalType fd loc) value
@@ -94,7 +107,7 @@ let rec validateExpressionExpecting expectedType expr fd =
 
   | Immediate(localType, value) ->
     let et = ExpressionTypes.fromLocal localType
-    checkType expectedType et
+    expr |> checkType expectedType et
 
   // TODO: Call, addressof
 
@@ -118,7 +131,7 @@ let rec validateExpressionExpecting expectedType expr fd =
   | Sge(localType, lhs, rhs) ->
     let et = ExpressionTypes.fromLocal localType
     allOk [
-      checkType expectedType _bool
+      expr |> checkType expectedType _bool
       fd |> validateExpressionExpecting et lhs
       fd |> validateExpressionExpecting et rhs
     ]
@@ -129,8 +142,8 @@ let rec validateExpressionExpecting expectedType expr fd =
   | Uge(localType, lhs, rhs) ->
     let et = ExpressionTypes.fromLocal localType
     allOk [
-      checkType expectedType _bool
-      checkIntegral et
+      expr |> checkType expectedType _bool
+      expr |> checkIntegral et
       fd |> validateExpressionExpecting et lhs
       fd |> validateExpressionExpecting et rhs
     ]
@@ -149,19 +162,19 @@ let rec validateExpressionExpecting expectedType expr fd =
   | Shr (lhs, rhs)
   | Sar (lhs, rhs) ->
     allOk [
-      checkIntegral expectedType
+      expr |> checkIntegral expectedType
       fd |> validateExpressionExpecting expectedType lhs
       fd |> validateExpressionExpecting expectedType rhs
     ]
 
   | Assert_type(assertedType, value) ->
     allOk [
-      checkType expectedType assertedType
+      expr |> checkType expectedType assertedType
       fd |> validateExpressionExpecting assertedType value
     ]
 
   | _ ->
-    Error (sprintf "unhandled expression type %A" expr)
+    Error("unhandled expression type", AtExpression(expr))
 
 
 let rec validateStatement stmt (fd : WebAssembly.AST.Module.FunctionDefinition) =
@@ -199,13 +212,19 @@ let rec validateStatement stmt (fd : WebAssembly.AST.Module.FunctionDefinition) 
       fd |> validateExpressionExpecting (getReturnType fd) v
 
     | _ ->
-      Error (sprintf "unhandled statement type: %A" stmt)
+      Error("unhandled statement type", AtStatement(stmt))
 
   match result with
-  | Ok ->
-    result
-  | Error e ->
-    Error (sprintf "Validation failed for statement: %A\n%s" stmt e)
+  | Error(e, location) ->
+    (
+      match location with
+      | AtExpression expr ->
+        Error(e, AtExpressionInStatement(expr, stmt))
+      | _ ->
+        result
+    )
+  | Ok -> 
+    Ok
 
 let validateFunctionDefinition (fd : WebAssembly.AST.Module.FunctionDefinition) =
   fd |> validateStatement fd.Body
@@ -222,7 +241,7 @@ let validateSection (section : WebAssembly.AST.Module.Section) =
     fd |> validateList validateFunctionDefinition
 
   | _ ->
-    Error (sprintf "unhandled section type %A" section)
+    Error("unhandled section type", AtSection(section))
 
 let validateTopLevel (topLevel : WebAssembly.AST.Module.TopLevel) =
   (topLevel.Sections |> validateList validateSection)

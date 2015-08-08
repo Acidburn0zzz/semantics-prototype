@@ -23,8 +23,8 @@ let validateTopLevel topLevel =
   | Ok        ->
     printfn "Validation successful\n"
     printfn "%A\n" topLevel
-  | Error msg ->
-    printfn "Module validation failed: %s\n" msg
+  | Error(msg, location) ->
+    printfn "Module validation failed: %s\n  at location: %A\n" msg location
 
 let parseModule str =
   printfn "// \"\"\"%s\"\"\" \n" str
