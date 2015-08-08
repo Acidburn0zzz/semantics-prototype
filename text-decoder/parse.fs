@@ -63,8 +63,8 @@ let newNamedSymbolInScope scope name =
   AST.Symbol.NamedSymbol(idx, name)  
 
 
-type ParseResult =
-  | Success of obj
+type ParseResult<'T> =
+  | Success of 'T
   | Failure of error: string
 
 
@@ -112,7 +112,7 @@ and     _makeArgumentParser (ty:Type) =
       | Expression se -> 
         (
           match expressionFromSExpr scope se with
-          | Success expr -> Success (expr)
+          | Success expr -> Success (box expr)
           | Failure err  -> Failure (err)
         )
       | _             ->
@@ -121,15 +121,15 @@ and     _makeArgumentParser (ty:Type) =
   elif ty = typeof<AST.Symbol> then
     (fun scope (v : Value) ->
       match v with
-      | Symbol s -> Success (astSymbolFromSExprSymbol scope s)
+      | Symbol s -> Success (box (astSymbolFromSExprSymbol scope s))
       | _        -> Failure (sprintf "Expected symbol, got %A" v)
     )
   elif ty = typeof<AST.NumericLiteral> then
     (fun scope (v : Value) ->
       match v with
-      | Int32 i32   -> Success (NumericLiteral.Int32(i32))
-      | Int64 i64   -> Success (NumericLiteral.Int64(i64))
-      | Float f     -> Success (NumericLiteral.Float64(f))
+      | Int32 i32   -> Success (box (NumericLiteral.Int32(i32)))
+      | Int64 i64   -> Success (box (NumericLiteral.Int64(i64)))
+      | Float f     -> Success (box (NumericLiteral.Float64(f)))
       | _           -> Failure (sprintf "Expected int or float literal, got %A" v)
     )
   elif ty = typeof<AST.Statement> then
@@ -138,7 +138,7 @@ and     _makeArgumentParser (ty:Type) =
       | Expression se -> 
         (
           match blockFromSExpr scope se with
-          | Success expr -> Success (expr)
+          | Success expr -> Success (box expr)
           | Failure err  -> Failure (err)
         )
       | _             -> Failure (sprintf "Expected block or statement, got %A" v)
@@ -148,7 +148,7 @@ and     _makeArgumentParser (ty:Type) =
 
     (fun scope (v : Value) -> 
       match duFromKeyword cases v with
-      | Some du -> Success du
+      | Some du -> Success (box du)
       | _       -> Failure (sprintf "Expected keyword, got %A" v)
     )
 
@@ -251,7 +251,7 @@ and     statementFromSExpr scope sExpr =
     let maybeExpression = expressionFromSExpr scope sExpr
     match maybeExpression with
     | Success expr ->
-      Success (AST.Statement.Expression (expr :?> AST.Expression))
+      Success (AST.Statement.Expression expr)
     | Failure err ->
       Failure (sprintf "No statement type named '%s'; %s" name err)
 
@@ -265,7 +265,7 @@ and     blockFromSExpr scope sExpr =
       | Expression expr ->
         match statementFromSExpr scope expr with
         | Success stmt ->
-          stmt :?> AST.Statement
+          stmt
         | Failure e ->
           err := e
           Statement.Void
@@ -291,7 +291,7 @@ let read_block scope =
   read_sexpr |>>
     (fun se ->
       match blockFromSExpr scope se with
-      | Success stmt -> stmt :?> AST.Statement
+      | Success stmt -> stmt
       | Failure err  -> raise (new Exception(err))
     )
 
@@ -378,6 +378,8 @@ let read_definition_body scope functionName =
 
 let read_definition scope =
   readAbstractNamed "definition" (
+    // We read the function name, then *invoke* read_definition_body
+    //  this ensures that each function definition has its own child scope
     (read_numbered_symbol scope) >>= (read_definition_body scope)
   )
 
