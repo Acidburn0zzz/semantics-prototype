@@ -96,14 +96,16 @@ and     _makeArgumentParser (ty:Type) =
       | Float f     -> Success (NumericLiteral.Float64(f))
       | _           -> Failure (sprintf "Expected int or float literal, got %A" v)
     )
-  elif ty = typeof<AST.Block> then
+  elif ty = typeof<AST.Statement> then
     (fun scope (v: Value) ->
-      Failure "NYI: Block arguments"
-      (*
-      Success ({
-        Statements = []
-      } : Block)
-      *)
+      match v with
+      | Expression se -> 
+        (
+          match blockFromSExpr scope se with
+          | Success expr -> Success (expr)
+          | Failure err  -> Failure (err)
+        )
+      | _             -> Failure (sprintf "Expected block or statement, got %A" v)
     )
   else
     let cases = duGetCases ty
@@ -217,6 +219,31 @@ and     statementFromSExpr scope sExpr =
     | Failure err ->
       Failure (sprintf "No statement type named '%s'; %s" name err)
 
+and     blockFromSExpr scope sExpr =
+  let name = sExpr.keyword.ToLowerInvariant()
+
+  if name = "block" then
+    let err = ref null
+    let result = Block(sExpr.arguments |> List.map (fun (elt : Value) ->
+      match elt with
+      | Expression expr ->
+        match statementFromSExpr scope expr with
+        | Success stmt ->
+          stmt :?> AST.Statement
+        | Failure e ->
+          err := e
+          Statement.Void
+
+      | _ ->
+        err := "Expected expression"
+        Statement.Void
+      )        
+    )
+    Success result
+
+  else
+    statementFromSExpr scope sExpr
+
 let read_numbered_symbol scope = 
   (pstring "@") >>.
   choice [
@@ -228,15 +255,15 @@ let read_block scope =
   readAbstractNamed "block" (
     (readMany read_sexpr) |>>
     (fun sExprs ->
-      ({
-        Statements = List.map
+      Block(
+        List.map
           (fun se ->
             match statementFromSExpr scope se with
             | Success stmt -> stmt :?> AST.Statement
             | Failure err  -> raise (new Exception(err))
           )
           sExprs
-      } : Block)
+      )
     )
   )
 

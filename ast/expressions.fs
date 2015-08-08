@@ -137,18 +137,15 @@ and  Expression =
   // Compile-time type assertion
   | TypeAssertion         of LocalTypes * Expression
 
-and Block =
-  {
-    Statements: Statement list;
-  }
-
 and Statement =
-  | Block      of Block
+  | Block      of Statement list
   | Expression of Expression
-  | If         of Condition * Block
-  | Do_while   of Condition * Block
-  | Forever    of Block
+  | If         of Condition * Statement
+  | If_else    of Condition * Statement * Statement
+  | Do_while   of Condition * Statement
+  | Forever    of Statement
   | Return     of Expression
+  | Void
   // FIXME
   | Continue
   | Break

@@ -27,7 +27,7 @@ parseModule """
 )
 (section.declarations
   (declaration :int32 @add :int32 :int32)
-  (declaration :int32 @add_into :int32 :int32 :int32)
+  (declaration :int32 @write_into :int32 :int32 :int32)
 )
 (section.definitions
   (definition
@@ -48,16 +48,25 @@ parseModule """
     )
   )
   (definition
-    @add_into
+    @write_into
     (args
       :int32 @destination
       :int32 @lhs
       :int32 @rhs
     )
     (block
-      (store 
-        (int32.get_argument @destination) :int32
-        (int32.add (int32.get_argument @lhs) (int32.get_argument @rhs))
+      (if_else 
+        (immediate :int32 1)
+        (store 
+          (int32.get_argument @destination) :int32
+          (int32.add (int32.get_argument @lhs) (int32.get_argument @rhs))
+        )
+        (block
+          (store 
+            (int32.get_argument @destination) :int32
+            (int32.sub (int32.get_argument @lhs) (int32.get_argument @rhs))
+          )
+        )
       )
     )
   )

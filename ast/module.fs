@@ -31,5 +31,5 @@ and  FunctionDefinition =
     Name: Symbol;
     Arguments: LocalVariable list;
     LocalVariables: LocalVariable list;
-    Body: Block;
+    Body: Statement;
   }
