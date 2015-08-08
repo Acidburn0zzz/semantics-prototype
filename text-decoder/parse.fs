@@ -252,21 +252,12 @@ let read_numbered_symbol scope =
   ]
 
 let read_block scope =
-  readAbstractNamed "block" (
-    (readMany read_sexpr) |>>
-    (fun sExprs ->
-      Block(
-        List.map
-          (fun se ->
-            match statementFromSExpr scope se with
-            | Success stmt -> stmt :?> AST.Statement
-            | Failure err  -> raise (new Exception(err))
-          )
-          sExprs
-      )
+  read_sexpr |>>
+    (fun se ->
+      match blockFromSExpr scope se with
+      | Success stmt -> stmt :?> AST.Statement
+      | Failure err  -> raise (new Exception(err))
     )
-  )
-
 
 let sectionName s =
   attempt (pstring s .>> spaces)
