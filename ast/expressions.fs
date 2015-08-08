@@ -69,12 +69,10 @@ and  Expression =
   | Get_global            of GlobalVariable
   | Set_global            of GlobalVariable * Expression
 
-  | Load                  of Address    * FromMemoryType
-  | LoadExtended          of Address    * FromMemoryType * LengthExtensionTypes
+  | Load                  of FromMemoryType * Address    
+  | Load_extended         of FromMemoryType * Address * LengthExtensionTypes
 
-  // This seems wrong. Should Store accept the target type in LocalType? Gross asymmetry
-  | Store                 of Address    * ToMemoryType * Expression
-  | StoreConverted        of Address    * ToMemoryType * Expression * FromLocalType
+  | Store                 of ToMemoryType   * Address * FromLocalType * Expression
 
   | Immediate             of LocalTypes * NumericLiteral
 
@@ -85,12 +83,18 @@ and  Expression =
   | Comma                 of Expression * Expression
   | Conditional           of Condition  * Expression * Expression
 
-  // Int or float operations
-  | Eq                    of Expression * Expression
-  | Slt                   of Expression * Expression
-  | Sle                   of Expression * Expression
-  | Sgt                   of Expression * Expression
-  | Sge                   of Expression * Expression
+  // Int or float comparisons
+  | Eq                    of FromLocalType * Expression * Expression
+  | Slt                   of FromLocalType * Expression * Expression
+  | Sle                   of FromLocalType * Expression * Expression
+  | Sgt                   of FromLocalType * Expression * Expression
+  | Sge                   of FromLocalType * Expression * Expression
+
+  // Int-only comparisons
+  | Ult                   of FromLocalType * Expression * Expression
+  | Ule                   of FromLocalType * Expression * Expression
+  | Ugt                   of FromLocalType * Expression * Expression
+  | Uge                   of FromLocalType * Expression * Expression
 
   // Int-only operations
   | Add                   of Expression * Expression
@@ -106,10 +110,6 @@ and  Expression =
   | Shl                   of Expression * Expression
   | Shr                   of Expression * Expression
   | Sar                   of Expression * Expression
-  | Ult                   of Expression * Expression
-  | Ule                   of Expression * Expression
-  | Ugt                   of Expression * Expression
-  | Uge                   of Expression * Expression
   | Clz                   of Expression
   | Ctz                   of Expression
   | Popcnt                of Expression
@@ -144,7 +144,7 @@ and  Expression =
   | Extend                of Expression * LengthExtensionTypes
 
   // Compile-time type assertion
-  | TypeAssertion         of ExpressionTypes * Expression
+  | Assert_type           of ExpressionTypes * Expression
 
 and Statement =
   | Block      of Statement list

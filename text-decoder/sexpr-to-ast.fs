@@ -165,7 +165,7 @@ and     expressionFromSExpr scope sExpr =
       let expectedType = duFromString cases nameParts.[0]
       match expectedType with
       | Some lt ->
-        let assertion = TypeAssertion(lt, result)
+        let assertion = Assert_type(lt, result)
         Success (assertion)
       | _ ->
         Failure (sprintf "Invalid type assertion '%s' in '%s'" nameParts.[0] sExpr.keyword)

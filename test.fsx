@@ -63,20 +63,20 @@ parseModule """
     @write_into :void
     (args
       :int32 @destination
-      :int32 @lhs
+      :float32 @lhs
       :int32 @rhs
     )
     (block
       (if_else 
         (immediate :int32 1)
         (store 
-          (int32.get_argument @destination) :int32
-          (int32.add (int32.get_argument @lhs) (int32.get_argument @rhs))
+          :int32 (int32.get_argument @destination)
+          :int32 (int32.add (int32.get_argument @lhs) (int32.get_argument @rhs))
         )
         (block
           (store 
-            (int32.get_argument @destination) :int32
-            (int32.sub (int32.get_argument @lhs) (int32.get_argument @rhs))
+            :int32 (int32.get_argument @destination)
+            :int32 (int32.sub (int32.get_argument @lhs) (int32.get_argument @rhs))
           )
         )
       )
