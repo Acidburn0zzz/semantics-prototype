@@ -22,13 +22,14 @@ and  Section =
 and  FunctionDeclaration =
   {
     Name: Symbol;
-    ReturnType: LocalTypes;
+    ReturnType: ExpressionTypes;
     ArgumentTypes: LocalTypes list;
   }
 
 and  FunctionDefinition =
   {
     Name: Symbol;
+    ReturnType: ExpressionTypes;
     Arguments: LocalVariable list;
     LocalVariables: LocalVariable list;
     Body: Statement;

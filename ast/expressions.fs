@@ -24,6 +24,14 @@ and  ExpressionTypes =
   | Float32
   | Float64
 
+  with
+    static member fromLocal lt =
+      match lt with
+      | LocalTypes.Int32 -> Int32
+      | LocalTypes.Int64 -> Int64
+      | LocalTypes.Float32 -> Float32
+      | LocalTypes.Float64 -> Float64
+
 and  MemoryTypes =
   | Int8
   | Int16
@@ -34,6 +42,7 @@ and  MemoryTypes =
 
 and  FromMemoryType = MemoryTypes
 and  ToMemoryType   = MemoryTypes
+
 
 
 type NumericLiteral =
@@ -135,7 +144,7 @@ and  Expression =
   | Extend                of Expression * LengthExtensionTypes
 
   // Compile-time type assertion
-  | TypeAssertion         of LocalTypes * Expression
+  | TypeAssertion         of ExpressionTypes * Expression
 
 and Statement =
   | Block      of Statement list

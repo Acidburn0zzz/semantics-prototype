@@ -1,12 +1,14 @@
 #I "libs/FParsec"
 #r "FParsec.dll"
 #r "FParsecCS.dll"
-#load "sexpr/sexpr.fs"
-#load "ast/expressions.fs" "ast/module.fs" 
-#load "text-decoder/symbols.fs" "text-decoder/parse.fs"
+#load "sexpr/sexpr.fs" 
+      "ast/expressions.fs" "ast/module.fs"
+      "text-decoder/symbols.fs" "text-decoder/sexpr-to-ast.fs" "text-decoder/parse.fs"
+      "semantics/validate.fs"
 
 open FParsec
 open WebAssembly
+open WebAssembly.AST.Validator
 
 let parseSExpr str = 
   printfn "// \"%s\" \n" str
@@ -16,11 +18,19 @@ let parseSExpr str =
     printfn "%A\n" expr
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
 
+let validateTopLevel topLevel =
+  match (WebAssembly.AST.Validator.validateTopLevel topLevel) with
+  | Ok        ->
+    printfn "Validation successful\n"
+    printfn "%A\n" topLevel
+  | Error msg ->
+    printfn "Module validation failed: %s\n" msg
+
 let parseModule str =
   printfn "// \"\"\"%s\"\"\" \n" str
   match (AST.Parse.topLevelFromString str) with
-  | Success(expr, _, _)         -> 
-    printfn "%A\n" expr
+  | Success(topLevel, _, _)         ->
+    validateTopLevel topLevel
   | Failure(errorMessage, _, _) -> printfn "Failed: %s" errorMessage
  
 parseModule """
@@ -28,12 +38,12 @@ parseModule """
   @add
 )
 (section.declarations
-  (declaration :int32 @add :int32 :int32)
-  (declaration :int32 @write_into :int32 :int32 :int32)
+  (declaration @add :int32 :int32 :int32)
+  (declaration @write_into :void :int32 :int32 :int32)
 )
 (section.definitions
   (definition
-    @add
+    @add :int32
     (args
       :int32 @lhs
       :int32 @rhs
@@ -50,7 +60,7 @@ parseModule """
     )
   )
   (definition
-    @write_into
+    @write_into :void
     (args
       :int32 @destination
       :int32 @lhs

@@ -43,6 +43,15 @@ let read_localType =
     enumerant "float64" LocalTypes.Float64;
   ] .>> spaces
 
+let read_expressionType =
+  (pstring ":") >>. choice [
+    enumerant "void"    ExpressionTypes.Void;
+    enumerant "int32"   ExpressionTypes.Int32;
+    enumerant "int64"   ExpressionTypes.Int64;
+    enumerant "float32" ExpressionTypes.Float32;
+    enumerant "float64" ExpressionTypes.Float64;
+  ] .>> spaces
+
 let read_variable_declaration scope =
   pipe2 
     read_localType (read_numbered_symbol scope)
@@ -63,16 +72,16 @@ let read_local_declarations scope =
 let read_declaration scope =
   readAbstractNamed "declaration" (
     (pipe3
-      // return type
-      read_localType
       // name
       (read_numbered_symbol scope)
+      // return type
+      read_expressionType
       // argument types
       (readMany read_localType)
       (fun a b c ->
         {
-          ReturnType    = a;
-          Name          = b;
+          Name          = a;
+          ReturnType    = b;
           ArgumentTypes = c;
         } : FunctionDeclaration
       )
@@ -86,7 +95,9 @@ let read_declarations scope =
 let read_definition_body scope functionName =
   let childScope = Symbols.makeChildScope scope
 
-  (pipe3
+  (pipe4
+    // return type
+    read_expressionType
     // (args ...)
     (read_argument_declarations childScope)
     // optional (locals ...)
@@ -94,12 +105,13 @@ let read_definition_body scope functionName =
     // function body
     (read_block childScope)
 
-    (fun a b c ->
+    (fun a b c d ->
       {
         Name           = functionName;
-        Arguments      = a;
-        LocalVariables = b;
-        Body           = c;
+        ReturnType     = a;
+        Arguments      = b;
+        LocalVariables = c;
+        Body           = d;
       } : FunctionDefinition
     )
   )
