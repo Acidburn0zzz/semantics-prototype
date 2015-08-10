@@ -63,7 +63,7 @@ parseModule """
     @write_into :void
     (args
       :int32 @destination
-      :float32 @lhs
+      :int32 @lhs
       :int32 @rhs
     )
     (block
