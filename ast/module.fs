@@ -17,7 +17,7 @@ and  Section =
   | SymbolTable          of Symbol list
   | FunctionDeclarations of FunctionDeclaration list
   | FunctionDefinitions  of FunctionDefinition  list
-  | Unknown              of name: string
+  | Unknown              of string
 
 and  FunctionDeclaration =
   {

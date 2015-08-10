@@ -5,9 +5,11 @@ open System
 open System.Collections.Generic
 
 
+type ErrorMessage = string
+
 type ParseResult<'T> =
   | Success of 'T
-  | Failure of error: string
+  | Failure of ErrorMessage
 
 
 [<AllowNullLiteral>]

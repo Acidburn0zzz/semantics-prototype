@@ -9,3 +9,6 @@ libs
 vs/bin
 vs/obj
 *.suo
+*.userprefs
+monodevelop/bin
+monodevelop/obj

@@ -10,9 +10,11 @@ let _bool    = ExpressionTypes.Int32
 let _int32   = ExpressionTypes.Int32
 
 
+type ErrorMessage = string
+
 type ValidationResult =
   | Ok
-  | Error of message: string * location: ErrorLocation
+  | Error of ErrorMessage * ErrorLocation
 
 and  ErrorLocation =
   | AtExpression            of Expression

@@ -76,8 +76,8 @@ and  Expression =
 
   | Immediate             of LocalTypes * NumericLiteral
 
-  | Call_direct           of Symbol     * arguments: (Expression list)
-  | Call_indirect         of Expression * returnType: LocalTypes * argumentTypes: (LocalTypes list) * arguments: (Expression list)
+  | Call_direct           of Symbol     * Expression list
+  | Call_indirect         of Expression * LocalTypes * LocalTypes list * Expression list
   | Addressof             of Symbol
 
   | Comma                 of Expression * Expression

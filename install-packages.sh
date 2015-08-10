@@ -28,3 +28,6 @@ mkdir -p ./libs/
 
 FPARSEC=`realpath ./packages/FParsec.*/lib/net40-client/`
 ln -f -s $FPARSEC libs/FParsec
+
+FSHARPCORE=`realpath ./packages/FSharp.Core.*/lib/net40/`
+ln -f -s $FSHARPCORE libs/FSharp.Core
